@@ -515,7 +515,7 @@ class App {
 
     /**
      * Starts up the webhook for the bot. If you don't have `.env` file set up, you will need to define these values manually.
-     * @param {{allowed_updates:string[], webhookPath: string, port: number, serverTimeout: number, secretToken: string}} config 
+     * @param {{url: string, allowed_updates:string[], webhookPath: string, port: number, serverTimeout: number, secretToken: string}} config 
      */
     async run(config = {}){
         if (this.server) {
@@ -548,38 +548,38 @@ class App {
             }
         });
 
-        app.post(`/video_watched`, async (req, res) => {
-            const {user_id, first_name, last_name, username} = req.body;
-            res.status(200).send({"ok": true, result: {}});
-            const full_name = `${first_name || ""}${first_name && last_name ? " " : ""}${last_name || ""}`;
-            console.log(`User ${first_name} (${user_id}) has watched the video.`);
-            const currentTime = Math.floor(Date.now() / 1000);
-            const time = currentTime - 29;
-            await Context.bot.restrictChatMember({
-                chat_id: process.env.TEST_GROUP_ID,
-                user_id: user_id,
-                permissions: new ChatPermissions({
-                    can_send_documents: true,
-                    can_send_messages: true,
-                    can_send_other_messages: true,
-                    can_send_photos: true,
-                    can_send_videos: true,
-                }),
-                use_independent_chat_permissions: true,
-                until_date: time
-            });
+        // app.post(`/video_watched`, async (req, res) => {
+        //     const {user_id, first_name, last_name, username} = req.body;
+        //     res.status(200).send({"ok": true, result: {}});
+        //     const full_name = `${first_name || ""}${first_name && last_name ? " " : ""}${last_name || ""}`;
+        //     console.log(`User ${first_name} (${user_id}) has watched the video.`);
+        //     const currentTime = Math.floor(Date.now() / 1000);
+        //     const time = currentTime - 29;
+        //     await Context.bot.restrictChatMember({
+        //         chat_id: process.env.TEST_GROUP_ID,
+        //         user_id: user_id,
+        //         permissions: new ChatPermissions({
+        //             can_send_documents: true,
+        //             can_send_messages: true,
+        //             can_send_other_messages: true,
+        //             can_send_photos: true,
+        //             can_send_videos: true,
+        //         }),
+        //         use_independent_chat_permissions: true,
+        //         until_date: time
+        //     });
             
-            const msg = await Context.bot.sendMessage({
-                chat_id: process.env.TEST_GROUP_ID,
-                text: `Welcome to the group <a href="tg://user?id=${user_id}">${full_name}</a>!`
-            });
-            await new Promise(res => setTimeout(res, 3000));
-            await msg.delete();
-        });
+        //     const msg = await Context.bot.sendMessage({
+        //         chat_id: process.env.TEST_GROUP_ID,
+        //         text: `Welcome to the group <a href="tg://user?id=${user_id}">${full_name}</a>!`
+        //     });
+        //     await new Promise(res => setTimeout(res, 3000));
+        //     await msg.delete();
+        // });
         
         (async () => {
             this.server = app.listen(PORT, async () => {
-                const url = process.env.WEBHOOK_URL;
+                const url = config.url || process.env.WEBHOOK_URL;
                 console.log(`WEBHOOK URL: ${url}`);
                 const webhookInfo = await this.getWebhookInfo();
 

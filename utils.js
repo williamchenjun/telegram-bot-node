@@ -1,60 +1,10 @@
 /* Functions that are not inherently part of Telegram bots. These are used for convenience. */
-import crypto from "crypto";
-import { Context } from "./base.js";
 import { Permissions } from "./constants.js";
 
 function filterObject(obj){
     return Object.fromEntries(
         Object.entries(obj).filter(([key, value]) => value !== null && value !== undefined)
     );
-}
-
-function generateToken(userId, messageId, durationInDays = null, secretKey) {
-    // Calculate expiration: null for no expiration
-    const expiration = durationInDays
-        ? Date.now() + durationInDays * 24 * 60 * 60 * 1000 // Convert days to milliseconds
-        : null; // No expiration for PAYG
-
-    const payload = `${userId}:${messageId}:${expiration}`;
-    
-    // Create a secure HMAC signature
-    const signature = crypto
-        .createHmac('sha256', secretKey)
-        .update(payload)
-        .digest('hex');
-    
-    // Combine the payload and signature
-    const token = Buffer.from(`${payload}:${signature}`).toString('base64');
-    
-    return token;
-}
-
-function verifyToken(token, secretKey) {
-    try {
-        const decoded = Buffer.from(token, 'base64').toString('utf8');
-        const [userId, messageId, expiration, signature] = decoded.split(':');
-
-        // Verify expiration (if set)
-        if (expiration !== 'null' && Date.now() > parseInt(expiration, 10)) {
-            return { valid: false, reason: 'Token has expired' };
-        }
-
-        // Recreate the signature
-        const payload = `${userId}:${messageId}:${expiration}`;
-        const expectedSignature = crypto
-            .createHmac('sha256', secretKey)
-            .update(payload)
-            .digest('hex');
-
-        // Validate the signature
-        if (signature !== expectedSignature) {
-            return { valid: false, reason: 'Invalid signature' };
-        }
-
-        return { valid: true, userId, messageId, expiration };
-    } catch (error) {
-        return { valid: false, reason: 'Invalid token format' };
-    }
 }
 
 /**
@@ -123,8 +73,6 @@ function parseCommand(input) {
 
 export {
     filterObject,
-    generateToken,
-    verifyToken,
     accessControl,
     denyAccess,
     parseCommand
