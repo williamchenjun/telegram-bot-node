@@ -16,6 +16,7 @@
     "ngrok": "^5.0.0-beta.2"
   },
   "exports": {
+    ".": "./base.js",
     "./base": "./base.js",
     "./components": "./components.js",
     "./constants": "./constants.js",
