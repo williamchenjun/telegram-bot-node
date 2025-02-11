@@ -14,5 +14,13 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "ngrok": "^5.0.0-beta.2"
+  },
+  "exports": {
+    "./base": "./base.js",
+    "./components": "./components.js",
+    "./constants": "./constants.js",
+    "./extra": "./extra.js",
+    "./handlers": "./handlers.js",
+    "./utils": "./utils.js"
   }
 }
