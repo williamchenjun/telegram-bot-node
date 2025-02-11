@@ -4,7 +4,7 @@ import fs from "fs";
 import { FormData } from "node-fetch";
 import fetch from "node-fetch";
 import ngrok from "ngrok";
-import express, {Request, Response} from "express";
+import express from "express";
 import { UpdateType } from "./constants.js";
 import { Queue, Schedule } from "./extra.js";
 import path from "path";
@@ -317,9 +317,9 @@ class App {
      * Define a custom webhook endpoint response. You can integrate this with `Context`.
      * @param {"POST"|"GET"} method 
      * @param {string} path 
-     * @param {(req: Request, res: Response) => Promise<void>} callback 
+     * @param {(req: import("express").Request, res: import("express").Response) => Promise<void>} callback 
      */
-    addEndpoint(method = "GET", path = "/", callback){
+    addEndPoint(method = "GET", path = "/", callback){
         if (!this.express) {
             console.error("Express server is uninitialised.");
             return;
