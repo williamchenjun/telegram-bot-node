@@ -170,7 +170,7 @@ class Update {
             let user = new User(this.update.callback_query.from);
             return user;
         } else if (this.update?.chat_member){
-            return new Chat(this.update.chat_member.from);
+            return new User(this.update.chat_member.from);
         }
     }
     /**
