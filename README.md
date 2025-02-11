@@ -106,3 +106,25 @@ The environment variables that can be set are:
 - `API_KEY`: Your Telegram bot API token.
 
 You can run this bot locally, on Docker, or on your server.
+
+## Adding custom endpoints
+You can add custom webhook endpoints to trigger certain behaviours by using the `App.addEndpoint(method, path, callback)` method
+
+```js
+import { App } from "telegram-bot-node";
+
+const app = new App().token(API_KEY).build();
+
+// req is an express Request, res is an express Response.
+app.addEndpoint("POST", "/submit", async (req, res) => {
+    const data = req.body;
+    // do something with the data...
+    // e.g. Context.bot.sendMessage({...});
+
+    res.status(200).send("ok");
+});
+
+app.run({...});
+```
+
+This is useful if you have external sources that interact with your Telegram bot and you want to trigger a bot response after an event. For instance, email or form submissions, new social media or blog posts, etc..

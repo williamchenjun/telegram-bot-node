@@ -4,7 +4,7 @@ import fs from "fs";
 import { FormData } from "node-fetch";
 import fetch from "node-fetch";
 import ngrok from "ngrok";
-import express from "express";
+import express, {Request, Response} from "express";
 import { UpdateType } from "./constants.js";
 import { Queue, Schedule } from "./extra.js";
 import path from "path";
@@ -314,6 +314,25 @@ class App {
     }
 
     /**
+     * Define a custom webhook endpoint response. You can integrate this with `Context`.
+     * @param {"POST"|"GET"} method 
+     * @param {string} path 
+     * @param {(req: Request, res: Response) => Promise<void>} callback 
+     */
+    addEndpoint(method = "GET", path = "/", callback){
+        if (!this.express) {
+            console.error("Express server is uninitialised.");
+            return;
+        }
+
+        if (method === "GET"){
+            return this.express.get(path, callback);
+        }
+
+        return this.express.post(path, callback);
+    }
+
+    /**
      * Set default values.
      * @param {{parse_mode:string, link_preview_options: LinkPreviewOptions, disable_notification: boolean, protect_content: boolean}} config 
      * @returns 
@@ -548,35 +567,6 @@ class App {
             }
         });
 
-        // app.post(`/video_watched`, async (req, res) => {
-        //     const {user_id, first_name, last_name, username} = req.body;
-        //     res.status(200).send({"ok": true, result: {}});
-        //     const full_name = `${first_name || ""}${first_name && last_name ? " " : ""}${last_name || ""}`;
-        //     console.log(`User ${first_name} (${user_id}) has watched the video.`);
-        //     const currentTime = Math.floor(Date.now() / 1000);
-        //     const time = currentTime - 29;
-        //     await Context.bot.restrictChatMember({
-        //         chat_id: process.env.TEST_GROUP_ID,
-        //         user_id: user_id,
-        //         permissions: new ChatPermissions({
-        //             can_send_documents: true,
-        //             can_send_messages: true,
-        //             can_send_other_messages: true,
-        //             can_send_photos: true,
-        //             can_send_videos: true,
-        //         }),
-        //         use_independent_chat_permissions: true,
-        //         until_date: time
-        //     });
-            
-        //     const msg = await Context.bot.sendMessage({
-        //         chat_id: process.env.TEST_GROUP_ID,
-        //         text: `Welcome to the group <a href="tg://user?id=${user_id}">${full_name}</a>!`
-        //     });
-        //     await new Promise(res => setTimeout(res, 3000));
-        //     await msg.delete();
-        // });
-        
         (async () => {
             this.server = app.listen(PORT, async () => {
                 const url = config.url || process.env.WEBHOOK_URL;
