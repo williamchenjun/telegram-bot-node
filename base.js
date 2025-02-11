@@ -201,9 +201,9 @@ class Update {
         
         if (update && update?.chat_member){
             this.#chat_member = update.chat_member;
-            return update.chat_member;
+            return new ChatMember(update.chat_member);
         } else if (this.update?.chat_member) {
-            return this.update.chat_member;
+            return new ChatMemberUpdated(this.update.chat_member);
         }
         return null;
     }
