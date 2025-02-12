@@ -1228,6 +1228,26 @@ class PhotoSize {
     get file_size(){return this.photo_size.hasOwnProperty('file_size')? this.photo_size.file_size : null;}
 }
 
+/**
+ * This object represent a user's profile pictures.
+ */
+class UserProfilePhotos {
+    constructor(user_profile_photos){
+        this.user_profile_photos = user_profile_photos;
+    }
+
+    /**
+     * Total number of profile pictures the target user has.
+     * @returns {number}
+     */
+    get total_count(){return this.user_profile_photos?.total_count;}
+    /**
+     * Requested profile pictures (in up to 4 sizes each).
+     * @returns {PhotoSize[]} 
+     */
+    get photos(){return this.user_profile_photos?.photos.map(photo => new PhotoSize(photo));}
+}
+
 class MessageEntity {
     constructor(message_entity){
         this.message_entity = message_entity;
@@ -2412,6 +2432,7 @@ export {
     MessageOriginHiddenUser,
     MessageOriginUser,
     PhotoSize,
+    UserProfilePhotos,
     Document,
     CallbackQuery,
     MaybeInaccessibleMessage,

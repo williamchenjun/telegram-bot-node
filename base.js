@@ -1,4 +1,4 @@
-import { CallbackQuery, Chat, LinkPreviewOptions, Message, WebhookInfo, _File, User, ChatMember, ChatMemberAdministrator, ChatMemberBanned, ChatMemberMember, ChatMemberLeft, ChatMemberRestricted, ChatMemberOwner, InputFile, ChatMemberUpdated, Document, ChatFullInfo, ChatPermissions} from "./components.js";
+import { CallbackQuery, Chat, LinkPreviewOptions, Message, WebhookInfo, _File, User, ChatMember, ChatMemberAdministrator, ChatMemberBanned, ChatMemberMember, ChatMemberLeft, ChatMemberRestricted, ChatMemberOwner, InputFile, ChatMemberUpdated, Document, ChatFullInfo, ChatPermissions, MessageId, UserProfilePhotos} from "./components.js";
 import { BaseHandler, ConversationHandler } from "./handlers.js";
 import fs from "fs";
 import { FormData } from "node-fetch";
@@ -984,6 +984,25 @@ class Bot {
         const result = await response.json();
         return result.result.map(x => new MessageId(x));
     }
+
+    /**
+     * Use this method to get a list of profile pictures for a user. Returns a `UserProfilePhotos` object.
+     * @param {{user_id: number, limit: number, offset: number}} config 
+     * @returns 
+     */
+    async getUserProfilePhotos(config){
+        let params = App.HTTP({method: "getUserProfilePhotos", params: config});
+        const response = await fetch(this.endpoint, params);
+        
+        if (!response.ok){
+            console.error("Error:", await response.text());
+            return null;
+        }
+
+        const result = await response.json();
+        return new UserProfilePhotos(result.result);
+    }
+
 }
 
 export {
