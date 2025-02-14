@@ -533,7 +533,7 @@ class App {
 
     /**
      * Starts up the webhook for the bot. If you don't have `.env` file set up, you will need to define these values manually.
-     * @param {{url: string, allowed_updates:string[], webhookPath: string, port: number, serverTimeout: number, secretToken: string}} config 
+     * @param {{url: string, allowed_updates:string[], webhookPath: string, port: number, serverTimeout: number, secretToken: string, debug: boolean}} config 
      */
     async run(config = {}){
         if (this.server) {
@@ -548,6 +548,9 @@ class App {
         app.use(cors());
 
         app.post(config.webhookPath || "/", async (req, res) => {
+            if (config?.debug){
+                console.log("DEBUG:", JSON.stringify(req.body, null, 2));
+            }
             const incomingToken = req.headers["x-telegram-bot-api-secret-token"];
             
             if ((process.env.SECRET_TOKEN || config.secretToken) && ![process.env.SECRET_TOKEN, config.secretToken].includes(incomingToken)) {
