@@ -893,9 +893,14 @@ class Bot {
      */
     async getChatMember(config){
         let params = App.HTTP({method: "getChatMember", params: config});
-        const response = await fetch(this.endpoint, params)
-        .then(resp => resp.json());
-        return new ChatMember(response.result);
+        const response = await fetch(this.endpoint, params);
+
+        if (!response.ok){
+            console.error(await response.text());
+            return null;
+        }
+        const resp = await response.json();
+        return new ChatMember(resp.result);
     }
 
     /**
