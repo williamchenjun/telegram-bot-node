@@ -3,7 +3,6 @@ import { BaseHandler, ConversationHandler } from "./handlers.js";
 import fs from "fs";
 import { FormData } from "node-fetch";
 import fetch from "node-fetch";
-import ngrok from "ngrok";
 import express from "express";
 import { UpdateType } from "./constants.js";
 import { Queue, Schedule } from "./extra.js";
@@ -603,7 +602,7 @@ class App {
     }
 
     /**
-     * Kills the server and ngrok tunnel.
+     * Kills the express server.
      */
     async stop() {
         if (this.server) {
@@ -611,14 +610,6 @@ class App {
             this.server.close(() => {
                 console.log("Server stopped.");
             });
-        }
-    
-        if (this.ngrokTunnel) {
-            console.log("Stopping ngrok...");
-            await ngrok.disconnect();
-            await ngrok.kill();
-            this.ngrokTunnel = null;
-            console.log("ngrok stopped.");
         }
     }
 }
