@@ -1962,6 +1962,8 @@ class ChatMember {
             "kicked": ChatMemberBanned,
         };
 
+        console.log(JSON.stringify(data, null, 2));
+
         const TargetClass = statusToClassMap[data.status] || ChatMember;
 
         if (!TargetClass) {
