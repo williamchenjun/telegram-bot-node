@@ -515,7 +515,7 @@ class App {
             const updates = await response.json();
 
             if (updates.ok && updates.result.length){
-                if (debug) console.log(`[${new Date().toISOString()}] Update ${updates.result.at(-1).update_id}:\n${updates.result.at(-1)}`);
+                if (debug) console.log(`[${new Date().toISOString()}] Update ${updates.result.at(-1).update_id}:\n${JSON.stringify(updates.result.at(-1))}`);
                 for (const data of updates.result){
                     const update = new Update(data);
 
