@@ -518,14 +518,11 @@ class App {
                 if (debug) console.log(`[${new Date().toISOString()}] Update ${updates.result.at(-1).update_id}:\n${JSON.stringify(updates.result.at(-1))}`);
                 for (const data of updates.result){
                     const update = new Update(data);
-
-                    if (update.update_id > this.update_offset){
-                        this.update_offset = update.update_id + 1;
-
-                        await this.getUpdates(update);
-                    }
+                    await this.getUpdates(update);
+                    // if (update.update_id > this.update_offset){
+                    // }
                 }
-                
+                this.update_offset = update.update_id + 1;
             }
 
             this.timeout = setTimeout(() => this.run_polling(config), 1000);
