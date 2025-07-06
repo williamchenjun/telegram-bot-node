@@ -522,7 +522,7 @@ class App {
                     // if (update.update_id > this.update_offset){
                     // }
                 }
-                this.update_offset = update.update_id + 1;
+                this.update_offset = this.last_update_id + 1;
             }
 
             this.timeout = setTimeout(() => this.run_polling(config), 1000);
