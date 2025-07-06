@@ -496,9 +496,10 @@ class App {
 
     /**
      * Use this method to receive incoming updates using long polling (wiki). Returns an Array of Update objects.
-     * @param {{offset: number, limit: number, timeout: number, allowed_updates: string[], debug: boolean}} config 
+     * @param {{offset: number, limit: number, timeout: number, allowed_updates: string[]}} config 
+     * @param {boolean} debug
      */
-    async run_polling(config){
+    async run_polling(config, debug){
         if (this.timeout) clearTimeout(this.timeout)
         try {
             const params = App.HTTP({method: "getUpdates", params: {
