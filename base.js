@@ -271,6 +271,7 @@ class App {
         this.test_mode = false;
         this.update_offset = 0;
         this.lastProcessedTime = 0;
+        this.timeout = null;
 
     }
 
@@ -495,9 +496,10 @@ class App {
 
     /**
      * Use this method to receive incoming updates using long polling (wiki). Returns an Array of Update objects.
-     * @param {{offset: number, limit: number, timeout: number, allowed_updates: string[]}} config 
+     * @param {{offset: number, limit: number, timeout: number, allowed_updates: string[], debug: boolean}} config 
      */
     async run_polling(config){
+        if (this.timeout) clearTimeout(this.timeout)
         try {
             const params = App.HTTP({method: "getUpdates", params: {
                 offset: this.update_offset,
@@ -512,6 +514,7 @@ class App {
             const updates = await response.json();
 
             if (updates.ok && updates.result.length){
+                if (debug) console.log(`[${new Date().toISOString()}] Update ${updates.result.at(-1).update_id}:\n${updates.result.at(-1)}`);
                 for (const data of updates.result){
                     const update = new Update(data);
 
@@ -524,10 +527,10 @@ class App {
                 
             }
 
-            setTimeout(() => this.run_polling(config), 1000);
+            this.timeout = setTimeout(() => this.run_polling(config), 1000);
         } catch (error) {
             console.error("Error fetching updates:", error);
-            setTimeout(() => this.run_polling(config), 1000);
+            this.timeout = setTimeout(() => this.run_polling(config), 1000);
         }
     }
 
