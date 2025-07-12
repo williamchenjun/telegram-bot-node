@@ -64,7 +64,7 @@ The module is composed of the following subdirectories:
 - `telegram-bot-node/utils`: It contains utility functions that can be useful to you, such as `parseCommand` to deal with command arguments and `accessControl` to set up command permissions.
 
 ## How to set up a bot
-If you don't have a Telegram bot yet, you need to visit @BotFather on Telegram and create a new bot my sending the command `/newbot`.
+If you don't have a Telegram bot yet, you need to visit @BotFather on Telegram and create a new bot by sending the command `/newbot`.
 
 After you go through the process, BotFather will give you an API token. You should keep that safe and store it somewhere accessible, such as a `.env` file. A `.env` file is useful in nodeJS to store environmental variables that should be kept safe
 
