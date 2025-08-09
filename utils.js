@@ -13,30 +13,36 @@ function filterObject(obj){
  * @param {Permissions} requiredPermissions 
  * @returns 
  */
-function accessControl(requiredPermissions = 0) {
-    return (handler) => async (/**@type {Update}*/update, /**@type {Context}*/context) => {
+function accessControl(requiredPermissions = Permissions.MEMBER) {
+    const hasAllPerms = (userPerms, requiredPerms) => (userPerms & requiredPerms) === requiredPerms;
+    return (handler) => async (update, context) => {
         const userId = update.effective_user?.id;
-        const admins = await context.bot.getChatAdministrators({chat_id: update.effective_chat.id});
-        let userPermissions = 0;
+        const chatId = update.effective_chat?.id;
 
-        if (admins?.find(admin => admin?.status === "creator" && admin?.user.id === userId)) {
-            userPermissions |= Permissions.OWNER;
+        // default to MEMBER if we can't fetch admins
+        let userPermissions = Permissions.MEMBER;
+
+        try {
+            const admins = await context.bot.getChatAdministrators({ chat_id: chatId });
+
+            // Owner?
+            if (admins?.some(a => a?.status === "creator" && a?.user?.id === userId)) {
+                userPermissions |= Permissions.OWNER | Permissions.ADMIN; // owner implies admin
+            }
+            // Admin?
+            else if (admins?.some(a => a?.status === "administrator" && a?.user?.id === userId)) {
+                userPermissions |= Permissions.ADMIN;
+            }
+        } catch (e) {
+            // log but don't crash – treat as MEMBER only
+            console.error("getChatAdministrators failed:", e);
         }
 
-        if (admins?.find(admin => admin?.status === "administrator" && admin?.user.id === userId)){
-            userPermissions |= Permissions.ADMIN;
-        }
-
-        userPermissions |= Permissions.ALL;
-
-        const hasAccess = (userPermissions & requiredPermissions) > 0;
-
-        if (hasAccess) {
+        if (hasAllPerms(userPermissions, requiredPermissions)) {
             return handler(update, context);
         }
 
-        // Deny Access
-        await denyAccess(update, "You do not have the necessary permission to perform this action.")
+        await denyAccess(update, "You do not have the necessary permission to perform this action.");
     };
 }
 
