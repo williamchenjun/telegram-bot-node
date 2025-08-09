@@ -1,4 +1,5 @@
 /* Functions that are not inherently part of Telegram bots. These are used for convenience. */
+import { Update, Context } from "./base.js";
 import { Permissions } from "./constants.js";
 
 function filterObject(obj){
@@ -13,19 +14,17 @@ function filterObject(obj){
  * @returns 
  */
 function accessControl(requiredPermissions = 0) {
-    return (handler) => async (update, context) => {
+    return (handler) => async (/**@type {Update}*/update, /**@type {Context}*/context) => {
         const userId = update.effective_user?.id;
-        const admins = process.env.TEST_ADMINS.split(",").map(Number);
-        const secadmins = process.env.TEST_SECONDARY_ADMINS.split(",").map(Number);
-        
+        const admins = await context.bot.getChatAdministrators({chat_id: update.effective_chat.id});
         let userPermissions = 0;
 
-        if (admins.includes(userId)) {
-            userPermissions |= Permissions.ADMIN;
+        if (admins?.find(admin => admin?.status === "creator" && admin?.user.id === userId)) {
+            userPermissions |= Permissions.OWNER;
         }
 
-        if (secadmins.includes(userId)){
-            userPermissions |= Permissions.SECADMIN;
+        if (admins?.find(admin => admin?.status === "administrator" && admin?.user.id === userId)){
+            userPermissions |= Permissions.ADMIN;
         }
 
         userPermissions |= Permissions.ALL;

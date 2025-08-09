@@ -903,6 +903,23 @@ class Bot {
         const resp = await response.json();
         return new ChatMember(resp.result);
     }
+    
+    /**
+     * Use this method to get a list of administrators in a chat, which aren't bots. Returns an Array of ChatMember objects.
+     * @param {{chat_id: number}} config 
+     * @returns {Promise<Array<ChatMember>>}
+     */
+    async getChatAdministrators(config){
+        let params = App.HTTP({method: "getChatAdministrators", params: config});
+        const response = await fetch(this.endpoint, params);
+
+        if (!response.ok){
+            console.error(await response.text());
+            return null;
+        }
+        const resp = await response.json();
+        return resp.result.map(x => new ChatMember(x));
+    }
 
     /**
      * Use this method to get up-to-date information about the chat. Returns a `ChatFullInfo` object on success.

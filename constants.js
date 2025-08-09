@@ -2,9 +2,9 @@
  * User interaction permissions levels.
  */
 const Permissions = {
-    ADMIN: 1 << 0,         // 1: Admins
-    SECADMIN: 1 << 1,      // 2: Secondary Admins
-    ALL: 1 << 2,           // 3: Allow All
+    OWNER: 1 << 0,          // 1: Owner
+    ADMIN: 1 << 1,          // 2: Admins
+    ALL: 1 << 2,            // 3: Allow All
 };
 
 /**
