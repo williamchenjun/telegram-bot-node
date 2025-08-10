@@ -593,7 +593,7 @@ class App {
                         console.error(`Unable to delete webhook:`, error);
                     }
                 }
-
+                
                 const allowed_updates = config.allowed_updates || [UpdateType.ALL];
 
                 // If webhook is set incorrectly or unset, set it up.

@@ -19,22 +19,18 @@ function accessControl(requiredPermissions = Permissions.MEMBER) {
         const userId = update.effective_user?.id;
         const chatId = update.effective_chat?.id;
 
-        // default to MEMBER if we can't fetch admins
         let userPermissions = Permissions.MEMBER;
 
         try {
             const admins = await context.bot.getChatAdministrators({ chat_id: chatId });
 
-            // Owner?
             if (admins?.some(a => a?.status === "creator" && a?.user?.id === userId)) {
-                userPermissions |= Permissions.OWNER | Permissions.ADMIN; // owner implies admin
+                userPermissions |= Permissions.OWNER | Permissions.ADMIN;
             }
-            // Admin?
             else if (admins?.some(a => a?.status === "administrator" && a?.user?.id === userId)) {
                 userPermissions |= Permissions.ADMIN;
             }
         } catch (e) {
-            // log but don't crash – treat as MEMBER only
             console.error("getChatAdministrators failed:", e);
         }
 

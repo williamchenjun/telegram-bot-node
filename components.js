@@ -252,7 +252,38 @@ class User{
             return `<a href="tg://user?id=${this.user.id}">${name}</a>`;
         }
     }
-
+    /**
+     * @returns {string} Optional. IETF language tag of the user's language.
+     */
+    get language_code(){return this.user?.language_code;}
+    /**
+     * @returns {string} Optional. True, if this user is a Telegram Premium user.
+     */
+    get is_premium(){return this.user?.is_premium;}
+    /**
+     * @returns {string} Optional. True, if this user added the bot to the attachment menu.
+     */
+    get added_to_attachment_menu(){return this.user?.added_to_attachment_menu;}
+    /**
+     * @returns {string} Optional. True, if the bot can be invited to groups. Returned only in getMe.
+     */
+    get can_join_groups(){return this.user?.can_join_groups;}
+    /**
+     * @returns {string} Optional. True, if privacy mode is disabled for the bot. Returned only in getMe.
+     */
+    get can_read_all_group_messages(){return this.user?.can_read_all_group_messages;}
+    /**
+     * @returns {string} Optional. True, if the bot supports inline queries. Returned only in getMe.
+     */
+    get supports_inline_queries(){return this.user?.supports_inline_queries;}
+    /**
+     * @returns {string} Optional. True, if the bot can be connected to a Telegram Business account to receive its messages. Returned only in getMe.
+     */
+    get can_connect_to_business(){return this.user?.can_connect_to_business;}
+    /**
+     * @returns {string} Optional. True, if the bot has a main Web App. Returned only in getMe.
+     */
+    get has_main_web_app(){return this.user?.has_main_web_app;}
     /**
      * Use this method to ban a user in a group, a supergroup or a channel. In the case of supergroups and channels, the user will not be able to return to the chat on their own using invite links, etc., unless unbanned first. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. Returns True on success.
      * 
