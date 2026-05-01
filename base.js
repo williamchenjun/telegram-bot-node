@@ -593,7 +593,7 @@ class App {
                         console.error(`Unable to delete webhook:`, error);
                     }
                 }
-
+                
                 const allowed_updates = config.allowed_updates || [UpdateType.ALL];
 
                 // If webhook is set incorrectly or unset, set it up.
@@ -936,6 +936,23 @@ class Bot {
         const resp = await response.json();
         return new ChatMember(resp.result);
     }
+    
+    /**
+     * Use this method to get a list of administrators in a chat, which aren't bots. Returns an Array of ChatMember objects.
+     * @param {{chat_id: number}} config 
+     * @returns {Promise<Array<ChatMember>>}
+     */
+    async getChatAdministrators(config){
+        let params = App.HTTP({method: "getChatAdministrators", params: config});
+        const response = await fetch(this.endpoint, params);
+
+        if (!response.ok){
+            console.error(await response.text());
+            return null;
+        }
+        const resp = await response.json();
+        return resp.result.map(x => new ChatMember(x));
+    }
 
     /**
      * Use this method to get up-to-date information about the chat. Returns a `ChatFullInfo` object on success.
@@ -957,28 +974,6 @@ class Bot {
         const resp = await response.json();
 
         return new ChatFullInfo(resp.result);
-    } 
-
-    /**
-     * Use this method to get a list of administrators in a chat, which aren't bots. Returns an Array of ChatMember objects.
-     * @param {string|number} chat_id Unique identifier for the target chat or username of the target supergroup or channel (in the format `@channelusername`).
-     * @returns {Promise<ChatMember[]>|Promise<null>}
-     */
-    async getChatAdministrators(chat_id) {
-        const response = await fetch(this.endpoint + "getChatAdministrators", {
-            method: "POST",
-            body: JSON.stringify({
-                chat_id: chat_id
-            })
-        });
-        
-        if (!response.ok){
-            console.error("Error:", await response.text());
-            return null;
-        }
-        const resp = await response.json();
-
-        return resp.result.map(member => new ChatMember(member));
     }
 
     /**

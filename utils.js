@@ -1,4 +1,5 @@
 /* Functions that are not inherently part of Telegram bots. These are used for convenience. */
+// import { Update, Context } from "./base.js";
 import { Permissions } from "./constants.js";
 
 function filterObject(obj){
@@ -12,32 +13,32 @@ function filterObject(obj){
  * @param {Permissions} requiredPermissions 
  * @returns 
  */
-function accessControl(requiredPermissions = 0) {
+function accessControl(requiredPermissions = Permissions.MEMBER) {
+    const hasAllPerms = (userPerms, requiredPerms) => (userPerms & requiredPerms) === requiredPerms;
     return (handler) => async (update, context) => {
         const userId = update.effective_user?.id;
-        const admins = process.env.ADMINS.split(",").map(Number);
-        const secadmins = process.env.SECONDARY_ADMINS.split(",").map(Number);
-        
-        let userPermissions = 0;
+        const chatId = update.effective_chat?.id;
 
-        if (admins.includes(userId)) {
-            userPermissions |= Permissions.ADMIN;
+        let userPermissions = Permissions.MEMBER;
+
+        try {
+            const admins = await context.bot.getChatAdministrators({ chat_id: chatId });
+
+            if (admins?.some(a => a?.status === "creator" && a?.user?.id === userId)) {
+                userPermissions |= Permissions.OWNER | Permissions.ADMIN;
+            }
+            else if (admins?.some(a => a?.status === "administrator" && a?.user?.id === userId)) {
+                userPermissions |= Permissions.ADMIN;
+            }
+        } catch (e) {
+            console.error("getChatAdministrators failed:", e);
         }
 
-        if (secadmins.includes(userId)){
-            userPermissions |= Permissions.SECADMIN;
-        }
-
-        userPermissions |= Permissions.ALL;
-
-        const hasAccess = (userPermissions & requiredPermissions) > 0;
-
-        if (hasAccess) {
+        if (hasAllPerms(userPermissions, requiredPermissions)) {
             return handler(update, context);
         }
 
-        // Deny Access
-        await denyAccess(update, "You do not have the necessary permission to perform this action.")
+        await denyAccess(update, "You do not have the necessary permission to perform this action.");
     };
 }
 
