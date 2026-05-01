@@ -1,134 +1,315 @@
 import {filterObject} from "./utils.js";
 import { Context } from "./base.js";
 
+/**
+ * This object represents a unique message identifier.
+ */
 class MessageId {
     constructor(messageId){
         this.messageId = messageId;
     }
-
+    /**
+     * Unique message identifier. In specific instances (e.g., message containing a video sent to a big chat), the server might automatically schedule a message instead of sending it immediately. In such cases, this field will be 0 and the relevant message will be unusable until it is actually sent.
+     * @returns {number}
+     */
     get message_id(){return this.messageId?.message_id;}
 }
 
+/**
+ * This object represents a message.
+ */
 class Message{
-    constructor(message){
+    constructor(message) {
         this.message = message;
     }
-    
+
+    toJSON() {
+        return { ...this };
+    }
+
+    // ===== BASIC =====
+
     /**
      * Unique message identifier inside this chat. In specific instances (e.g., message containing a video sent to a big chat), the server might automatically schedule a message instead of sending it immediately. In such cases, this field will be 0 and the relevant message will be unusable until it is actually sent.
-     * @returns {number} Unique message identifier inside this chat.
-     */
-    get message_id(){return this.message.message_id;}
-    /**
-     * Optional. Unique identifier of a message thread to which the message belongs; for supergroups only.
      * @returns {number}
      */
-    get message_thread_id(){return this.message?.message_thread_id;}
+    get message_id(){return this.message?.message_id};
+
     /**
-     * Sender of the message; empty for messages sent to channels. For backward compatibility, the field contains a fake sender user in non-channel chats, if the message was sent on behalf of a chat.
-     * @returns {User} 
-     */
-    get from(){return this.message.hasOwnProperty("from")? new User(this.message.from) : null;}
-    /**
-     * Date the message was sent in Unix time. It is always a positive number, representing a valid date.
-     * @returns {number} 
-     */
-    get date(){return this.message.date;}
-    /**
-     * Chat the message belongs to.
-     * @returns {Chat} 
-     */
-    get chat(){return new Chat(this.message.chat);}
-    /**
-     * For text messages, the actual UTF-8 text of the message.
-     * @returns {string} 
-     */
-    get text(){return this.message.hasOwnProperty("text")? this.message.text : null;}
-    /** 
-     * Information about the original message for forwarded messages.
-     * @returns {MessageOriginUser|MessageOriginChat|MessageOriginChannel|MessageOriginHiddenUser}  
-     */
-    get forward_origin(){return this.message.hasOwnProperty("forward_origin")? new MessageOrigin(this.message.forward_origin) : null;}
-    /**
-     * Optional. True, if the message is sent to a forum topic.
-     * @returns {boolean}
-     */
-    get is_topic_message(){return this.message?.is_topic_message;}
-    /**
-     * The chat the message was forwarded from.
-     * @returns {Chat}
-     */
-    get forward_from_chat(){return this.message.hasOwnProperty("forward_from_chat")? new Chat(this.message.forward_from_chat) : null;}
-    /**
-     * The attached document.
-     * @returns {Document} 
-     */
-    get document(){return this.message.hasOwnProperty("document")? new Document(this.message.document) : null;}
-    /**
-     * A list of MessageEntity representing all the entities in the message.
-     * @returns {MessageEntity[]} 
-     */
-    get entities(){return this.message.hasOwnProperty('entities')? this.message.entities.map(entity => new MessageEntity(entity)) : null;}
-    /**
-     * The caption of the message.
-     * @returns {string} 
-     */
-    get caption(){return this.message.hasOwnProperty('caption')? this.message.caption : null;}
-    /**
-     * A list of `PhotoSize` representing the attached photos.
-     * @returns {Array<PhotoSize>} 
-     */
-    get photo(){return this.message.hasOwnProperty('photo') ? this.message.photo.map(pic => new PhotoSize(pic)) : null;}
-    /**
-     * The attached video.
-     * @returns {Video} 
-     */
-    get video(){return this.message.hasOwnProperty('video')? new Video(this.message.video) : null;}
-    /**
-     * The unique identifier of a media message group this message belongs to.
-     * @returns {string} 
-     */
-    get media_group_id(){return this.message.hasOwnProperty("media_group_id")?this.message.media_group_id:null;}
-    /**
-     * Inline keyboard attached to the message. login_url buttons are represented as ordinary url buttons.
-     * @returns {InlineKeyboardMarkup} 
-     */
-    get reply_markup(){return this.message.hasOwnProperty('reply_markup') ? new InlineKeyboardMarkup(this.message.reply_markup.map(row => row.map(col => new InlineKeyboardButton(col)))) : null;}
-    /**
-     * Unique identifier of the message effect added to the message.
-     * @returns {string} 
-     */
-    get effect_id(){return this.message.hasOwnProperty("effect_id")? this.message.effect_id : null;}
-    /**
-     * Options used for link preview generation for the message, if it is a text message and link preview options were changed.
-     * @returns {LinkPreviewOptions} 
-     */
-    get link_preview_options(){return this.message.hasOwnProperty("link_preview_options")? new LinkPreviewOptions(this.message.link_preview_options):null;}
-    /**
-     * Optional. For replies in the same chat and message thread, the original message. Note that the Message object in this field will not contain further reply_to_message fields even if it itself is a reply.
-     * @returns {Message} 
-     */
-    get reply_to_message(){return this.message.hasOwnProperty("reply_to_message") ? new Message(this.message.reply_to_message) : null;}
-    /**
-     * Optional. Date the message was last edited in Unix time.
+     * Optional. Unique identifier of a message thread or forum topic to which the message belongs; for supergroups and private chats only.
      * @returns {number}
      */
-    get edit_date(){return this.message.hasOwnProperty("edit_date") ? this.message.edit_date : null;}
+    get message_thread_id(){return this.message?.message_thread_id};
+
     /**
-     * Optional. True, if the message can't be forwarded.
-     * @returns {boolean}
-     */
-    get has_protected_content(){return this.message.hasOwnProperty("has_protected_content")?this.message.has_protected_content:null;}
-    /**
-     * Optional. New members that were added to the group or supergroup and information about them (the bot itself may be one of these members)
-     * @returns {User[]}
-     */
-    get new_chat_members(){return this.message.hasOwnProperty("new_chat_members")?this.message.new_chat_members.map(member => new User(member)):null};
-    /**
-     * Optional. A member was removed from the group, information about them (this member may be the bot itself).
+     * Optional. Sender of the message.
      * @returns {User}
      */
-    get left_chat_member(){return this.message.hasOwnProperty("left_chat_member")?new User(this.message.left_chat_member):null;}
+    get from(){return this.message?.from ? new User(this.message.from) : null};
+
+    /**
+     * Optional. Sender of the message when sent on behalf of a chat.
+     * @returns {Chat}
+     */
+    get sender_chat(){return this.message?.sender_chat ? new Chat(this.message.sender_chat) : null};
+
+    /**
+     * Date the message was sent in Unix time. It is always a positive number, representing a valid date.
+     * @returns {number}
+     */
+    get date(){return this.message?.date};
+
+    /**
+     * Chat the message belongs to.
+     * @returns {Chat}
+     */
+    get chat(){return this.message?.chat ? new Chat(this.message.chat) : null};
+
+    // ===== FORWARD / REPLY =====
+
+    /**
+     * Optional. Information about the original message for forwarded messages.
+     * @returns {MessageOrigin}
+     */
+    get forward_origin(){
+        return this.message?.forward_origin
+            ? new MessageOrigin(this.message.forward_origin)
+            : null;
+    }
+
+    /**
+     * Optional. For replies in the same chat and message thread, the original message.
+     * @returns {Message}
+     */
+    get reply_to_message(){
+        return this.message?.reply_to_message
+            ? new Message(this.message.reply_to_message)
+            : null;
+    }
+
+    /**
+     * Optional. Information about the message that is being replied to, which may come from another chat or forum topic.
+     * @returns {ExternalReplyInfo}
+     */
+    get external_reply(){
+        return this.message?.external_reply
+            ? new ExternalReplyInfo(this.message.external_reply)
+            : null;
+    }
+
+    /**
+     * Optional. For replies to a story, the original story.
+     * @returns {Story}
+     */
+    get reply_to_story(){
+        return this.message?.reply_to_story
+            ? new Story(this.message.reply_to_story)
+            : null;
+    }
+
+    // ===== TEXT =====
+
+    /**
+     * Optional. For text messages, the actual UTF-8 text of the message.
+     * @returns {string}
+     */
+    get text(){return this.message?.text};
+
+    /**
+     * Optional. Special entities that appear in the text.
+     * @returns {MessageEntity[]}
+     */
+    get entities(){
+        return this.message?.entities?.map(e => new MessageEntity(e));
+    }
+
+    // ===== MEDIA =====
+
+    /**
+     * Optional. Message is an animation, information about the animation.
+     * @returns {Animation}
+     */
+    get animation(){return this.message?.animation ? new Animation(this.message.animation) : null};
+
+    /**
+     * Optional. Message is an audio file.
+     * @returns {Audio}
+     */
+    get audio(){return this.message?.audio ? new Audio(this.message.audio) : null};
+
+    /**
+     * Optional. Message is a general file.
+     * @returns {Document}
+     */
+    get document(){return this.message?.document ? new Document(this.message.document) : null};
+
+    /**
+     * Optional. Message contains paid media.
+     * @returns {PaidMediaInfo}
+     */
+    get paid_media(){
+        return this.message?.paid_media
+            ? new PaidMediaInfo(this.message.paid_media)
+            : null;
+    }
+
+    /**
+     * Optional. Message is a photo.
+     * @returns {PhotoSize[]}
+     */
+    get photo(){
+        return this.message?.photo?.map(p => new PhotoSize(p));
+    }
+
+    /**
+     * Optional. Message is a sticker.
+     * @returns {Sticker}
+     */
+    get sticker(){return this.message?.sticker ? new Sticker(this.message.sticker) : null};
+
+    /**
+     * Optional. Message is a video.
+     * @returns {Video}
+     */
+    get video(){return this.message?.video ? new Video(this.message.video) : null};
+
+    /**
+     * Optional. Message is a video note.
+     * @returns {VideoNote}
+     */
+    get video_note(){return this.message?.video_note ? new VideoNote(this.message.video_note) : null};
+
+    /**
+     * Optional. Message is a voice message.
+     * @returns {Voice}
+     */
+    get voice(){return this.message?.voice ? new Voice(this.message.voice) : null};
+
+    // ===== CAPTION =====
+
+    /**
+     * Optional. Caption for the animation, audio, document, paid media, photo, video or voice.
+     * @returns {string}
+     */
+    get caption(){return this.message?.caption};
+
+    /**
+     * Optional. Entities in caption.
+     * @returns {MessageEntity[]}
+     */
+    get caption_entities(){
+        return this.message?.caption_entities?.map(e => new MessageEntity(e));
+    }
+
+    // ===== OTHER CONTENT =====
+
+    /**
+     * Optional. Message is a checklist.
+     * @returns {Checklist}
+     */
+    get checklist(){return this.message?.checklist ? new Checklist(this.message.checklist) : null};
+
+    /**
+     * Optional. Message is a contact.
+     * @returns {Contact}
+     */
+    get contact(){return this.message?.contact ? new Contact(this.message.contact) : null};
+
+    /**
+     * Optional. Message is a dice.
+     * @returns {Dice}
+     */
+    get dice(){return this.message?.dice ? new Dice(this.message.dice) : null};
+
+    /**
+     * Optional. Message is a game.
+     * @returns {Game}
+     */
+    get game(){return this.message?.game ? new Game(this.message.game) : null};
+
+    /**
+     * Optional. Message is a poll.
+     * @returns {Poll}
+     */
+    get poll(){return this.message?.poll ? new Poll(this.message.poll) : null};
+
+    /**
+     * Optional. Message is a venue.
+     * @returns {Venue}
+     */
+    get venue(){return this.message?.venue ? new Venue(this.message.venue) : null};
+
+    /**
+     * Optional. Message is a location.
+     * @returns {Location}
+     */
+    get location(){return this.message?.location ? new Location(this.message.location) : null};
+
+    // ===== MEMBERS =====
+
+    /**
+     * Optional. New members that were added.
+     * @returns {User[]}
+     */
+    get new_chat_members(){
+        return this.message?.new_chat_members?.map(u => new User(u));
+    }
+
+    /**
+     * Optional. A member was removed.
+     * @returns {User}
+     */
+    get left_chat_member(){
+        return this.message?.left_chat_member
+            ? new User(this.message.left_chat_member)
+            : null;
+    }
+
+    // ===== PAYMENTS =====
+
+    /**
+     * Optional. Message is an invoice for a payment.
+     * @returns {Invoice}
+     */
+    get invoice(){
+        return this.message?.invoice
+            ? new Invoice(this.message.invoice)
+            : null;
+    }
+
+    // ===== SERVICE =====
+
+    /**
+     * Optional. Service message: some tasks in a checklist were marked as done or not done.
+     * @returns {ChecklistTasksDone}
+     */
+    get checklist_tasks_done(){
+        return this.message?.checklist_tasks_done
+            ? new ChecklistTasksDone(this.message.checklist_tasks_done)
+            : null;
+    }
+
+    /**
+     * Optional. Service message: tasks were added to a checklist.
+     * @returns {ChecklistTasksAdded}
+     */
+    get checklist_tasks_added(){
+        return this.message?.checklist_tasks_added
+            ? new ChecklistTasksAdded(this.message.checklist_tasks_added)
+            : null;
+    }
+
+    /**
+     * Optional. Inline keyboard attached to the message.
+     * @returns {InlineKeyboardMarkup}
+     */
+    get reply_markup(){
+        return this.message?.reply_markup
+            ? new InlineKeyboardMarkup(this.message.reply_markup)
+            : null;
+    }
+
+    // ===== USEFUL METHODS =====
 
     /**
      * Message deep link.
@@ -192,11 +373,23 @@ class Message{
      * 
      * Shortcut of `bot.pinChatMessage()`.
      * 
-     * @param {{business_connection_id: string, disable_notification: boolean}} config 
+     * @param {{business_connection_id?: string, disable_notification?: boolean}} config 
      * @returns {Promise<boolean>}
      */
     async pin(config){
         return await Context.bot.pinChatMessage({chat_id: this.chat.id, message_id: this.message_id, ...config})
+    }
+
+    /**
+     * Use this method to remove a message from the list of pinned messages in a chat. In private chats and channel direct messages chats, all messages can be unpinned. Conversely, the bot must be an administrator with the 'can_pin_messages' right or the 'can_edit_messages' right to unpin messages in groups and channels respectively. Returns True on success.
+     * 
+     * Shortcut of `bot.unpinChatMessage()`.
+     * 
+     * @param {{business_connection_id?: string}} config 
+     * @returns {Promise<boolean>}
+     */
+    async unpin(config){
+        return await Context.bot.unpinChatMessage({chat_id: this.chat.id, message_id: this.message_id, ...config})
     }
 
     /**
@@ -212,35 +405,119 @@ class Message{
     }
 }
 
+/**
+ * This object represents a Telegram user or bot.
+ */
 class User{
-    constructor(user){
+    constructor(user) {
         this.user = user;
     }
-    
+
+    toJSON() {
+        return { ...this };
+    }
+
     /**
-     * @returns {number} Unique identifier for this user or bot. This number may have more than 32 significant bits and some programming languages may have difficulty/silent defects in interpreting it. But it has at most 52 significant bits, so a 64-bit integer or double-precision float type are safe for storing this identifier.
+     * Unique identifier for this user or bot. This number may have more than 32 significant bits and some programming languages may have difficulty/silent defects in interpreting it. But it has at most 52 significant bits, so a 64-bit integer or double-precision float type are safe for storing this identifier.
+     * @returns {number}
      */
-    get id(){return this.user.id;}
+    get id(){return this.user?.id};
+
     /**
-     * @returns {boolean} True, if this user is a bot.
+     * True, if this user is a bot.
+     * @returns {boolean}
      */
-    get is_bot(){return this.user.is_bot;}
+    get is_bot(){return this.user?.is_bot};
+
     /**
-     * @returns {string} User's or bot's username.
+     * User's or bot's first name.
+     * @returns {string}
      */
-    get username(){return this.user.hasOwnProperty("username")? this.user.username : null;}
+    get first_name(){return this.user?.first_name};
+
     /**
-     * @returns {string} User's or bot's first name.
+     * Optional. User's or bot's last name.
+     * @returns {string}
      */
-    get first_name(){return this.user.first_name;}
+    get last_name(){return this.user?.last_name};
+
     /**
-     * @returns {string} User's or bot's last name.
+     * Optional. User's or bot's username.
+     * @returns {string}
      */
-    get last_name(){return this.user.hasOwnProperty("last_name")? this.user.last_name : null;}
+    get username(){return this.user?.username};
+
+    /**
+     * Optional. IETF language tag of the user's language.
+     * @returns {string}
+     */
+    get language_code(){return this.user?.language_code};
+
+    /**
+     * Optional. True, if this user is a Telegram Premium user.
+     * @returns {boolean}
+     */
+    get is_premium(){return this.user?.is_premium};
+
+    /**
+     * Optional. True, if this user added the bot to the attachment menu.
+     * @returns {boolean}
+     */
+    get added_to_attachment_menu(){return this.user?.added_to_attachment_menu};
+
+    /**
+     * Optional. True, if the bot can be invited to groups. Returned only in getMe.
+     * @returns {boolean}
+     */
+    get can_join_groups(){return this.user?.can_join_groups};
+
+    /**
+     * Optional. True, if privacy mode is disabled for the bot. Returned only in getMe.
+     * @returns {boolean}
+     */
+    get can_read_all_group_messages(){return this.user?.can_read_all_group_messages};
+
+    /**
+     * Optional. True, if the bot supports inline queries. Returned only in getMe.
+     * @returns {boolean}
+     */
+    get supports_inline_queries(){return this.user?.supports_inline_queries};
+
+    /**
+     * Optional. True, if the bot can be connected to a Telegram Business account to receive its messages. Returned only in getMe.
+     * @returns {boolean}
+     */
+    get can_connect_to_business(){return this.user?.can_connect_to_business};
+
+    /**
+     * Optional. True, if the bot has a main Web App. Returned only in getMe.
+     * @returns {boolean}
+     */
+    get has_main_web_app(){return this.user?.has_main_web_app};
+
+    /**
+     * Optional. True, if the bot has forum topic mode enabled in private chats. Returned only in getMe.
+     * @returns {boolean}
+     */
+    get has_topics_enabled(){return this.user?.has_topics_enabled};
+
+    /**
+     * Optional. True, if the bot allows users to create and delete topics in private chats. Returned only in getMe.
+     * @returns {boolean}
+     */
+    get allows_users_to_create_topics(){return this.user?.allows_users_to_create_topics};
+
+    /**
+     * Optional. True, if other bots can be created to be controlled by the bot. Returned only in getMe.
+     * @returns {boolean}
+     */
+    get can_manage_bots(){return this.user?.can_manage_bots};
+
     /**
      * @returns {string} User's or bot's full name.
      */
     get full_name(){return `${this.first_name || ""}${this.first_name && this.last_name ? " " : ""}${this.last_name || ""}`;}
+
     /**
      * @returns {string} Returns an HTML `<a href>` hyperlink mentioning the user. If no name is passed, it will show their full name.
      */
@@ -283,7 +560,7 @@ class User{
      * 
      * Shortcut of `bot.unbanChatMember()`.
      * 
-     * @param {{only_if_banned: boolean}} config 
+     * @param {{chat_id?: number, only_if_banned: boolean}} config 
      * @returns {Promise<boolean>}
      */
     async unban(config){
@@ -300,8 +577,120 @@ class User{
             }
         }
     }
+
+    /**
+     * Use this method to set a tag for a regular member in a group or a supergroup. The bot must be an administrator in the chat for this to work and must have the can_manage_tags administrator right. Returns True on success.
+     * 
+     * Shortcut of `bot.setChatMemberTag()`.
+     * 
+     * @param {{tag: string}} config 
+     * @returns {Promise<boolean>}
+     */
+    async setChatMemberTag(config) {
+        const chat_id = Context.botData.get("effective_user_chat_id");
+        if (chat_id){
+            return await Context.bot.setChatMemberTag({chat_id: chat_id, user_id: this.id, ...config});
+        } else {
+            try {
+                const tag = await Context.bot.setChatMemberTag({chat_id: config?.chat_id, user_id: this.id, ...config});
+                return tag;
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    }
 }
 
+/**
+ * This object describes the rating of a user based on their Telegram Star spendings.
+ */
+class UserRating {
+    constructor(user_rating) {
+        this.user_rating = user_rating;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Current level of the user, indicating their reliability when purchasing digital goods and services. A higher level suggests a more trustworthy customer; a negative level is likely reason for concern.
+     * @returns {number}
+     */
+    get level(){return this.user_rating?.level};
+
+    /**
+     * Numerical value of the user's rating; the higher the rating, the better.
+     * @returns {number}
+     */
+    get rating(){return this.user_rating?.rating};
+
+    /**
+     * The rating value required to get the current level.
+     * @returns {number}
+     */
+    get current_level_rating(){return this.user_rating?.current_level_rating};
+
+    /**
+     * Optional. The rating value required to get to the next level; omitted if the maximum level was reached.
+     * @returns {number}
+     */
+    get next_level_rating(){return this.user_rating?.next_level_rating};
+}
+
+/**
+ * This object contains information about the color scheme for a user's name, message replies and link previews based on a unique gift.
+ */
+class UniqueGiftColors {
+    constructor(unique_gift_colors) {
+        this.unique_gift_colors = unique_gift_colors;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Custom emoji identifier of the unique gift's model.
+     * @returns {string}
+     */
+    get model_custom_emoji_id(){return this.unique_gift_colors?.model_custom_emoji_id};
+
+    /**
+     * Custom emoji identifier of the unique gift's symbol.
+     * @returns {string}
+     */
+    get symbol_custom_emoji_id(){return this.unique_gift_colors?.symbol_custom_emoji_id};
+
+    /**
+     * Main color used in light themes; RGB format.
+     * @returns {number}
+     */
+    get light_theme_main_color(){return this.unique_gift_colors?.light_theme_main_color};
+
+    /**
+     * List of 1-3 additional colors used in light themes; RGB format.
+     * @returns {number[]}
+     */
+    get light_theme_other_colors(){return this.unique_gift_colors?.light_theme_other_colors};
+
+    /**
+     * Main color used in dark themes; RGB format.
+     * @returns {number}
+     */
+    get dark_theme_main_color(){return this.unique_gift_colors?.dark_theme_main_color};
+
+    /**
+     * List of 1-3 additional colors used in dark themes; RGB format.
+     * @returns {number[]}
+     */
+    get dark_theme_other_colors(){return this.unique_gift_colors?.dark_theme_other_colors};
+}
+
+/**
+ * This object represents a chat.
+ */
 class Chat {
     constructor(chat){
         this.chat = chat;
@@ -339,6 +728,10 @@ class Chat {
      * @returns {boolean} Optional. True, if the supergroup chat is a forum (has topics enabled).
      */
     get is_forum(){return this.chat.hasOwnProperty("is_forum")? this.chat.is_forum : null;}
+    /**
+     * @returns {boolean} Optional. True, if the chat is the direct messages chat of a channel
+     */
+    get is_direct_messages(){return this.chat.hasOwnProperty("is_direct_messages")? this.chat.is_direct_messages : null;}
     
     /**
      * 
@@ -422,6 +815,145 @@ class Chat {
     async banChatMember(config){
         return await Context.bot.banChatMember({chat_id: this.id, ...config});
     }
+
+    /**
+     * Use this method to unban a previously banned user in a supergroup or channel. The user will not return to the group or channel automatically, but will be able to join via link, etc. The bot must be an administrator for this to work. By default, this method guarantees that after the call the user is not a member of the chat, but will be able to join it. So if the user is a member of the chat they will also be removed from the chat. If you don't want this, use the parameter only_if_banned. Returns True on success.
+     * 
+     * Shortcut of `bot.unbanChatMember()`.
+     * 
+     * @param {{user_id: number, only_if_banned: boolean}} config 
+     * @returns {Promise<boolean>}
+     */
+    async unbanChatMember(config){
+        return await Context.bot.unbanChatMember({chat_id: this.id, ...config});
+    }
+
+    /**
+     * Use this method to clear the list of pinned messages in a chat. In private chats and channel direct messages chats, no additional rights are required to unpin all pinned messages. Conversely, the bot must be an administrator with the 'can_pin_messages' right or the 'can_edit_messages' right to unpin all pinned messages in groups and channels respectively. Returns True on success.
+     * 
+     * Shortcut of `bot.unpinAllChatMessages()`.
+     * 
+     * @returns {Promise<boolean>}
+     */
+    async unpinAllChatMessages(){
+        return await Context.bot.unpinAllChatMessages({chat_id: this.id});
+    }
+
+    /**
+     * Use this method to get up-to-date information about the chat. Returns a `ChatFullInfo` object on success.
+     * 
+     * Shortcut of `bot.getChat()`.
+     * 
+     * @returns {Promise<ChatFullInfo>}
+     */ 
+    async getChat(){
+        return await Context.bot.getChat({chat_id: this.id});
+    }
+
+    /**
+     * Use this method to get a list of administrators in the chat, which aren't bots. Returns an Array of ChatMember objects.
+     * 
+     * Shortcut of `bot.getChat()`.
+     * 
+     * @returns {Promise<ChatMember>}
+     */ 
+    async getChatAdministrators(){
+        return await Context.bot.getChatAdministrators({chat_id: this.id});
+    }
+
+    /**
+     * Use this method to get the number of members in a chat. Returns Int on success.
+     * 
+     * Shortcut of `bot.getChatMemberCount()`.
+     * 
+     * @returns {Promise<number>}
+     */ 
+    async getChatMemberCount(){
+        return await Context.bot.getChatMemberCount({chat_id: this.id});
+    }
+
+    /**
+     * Use this method to generate a new primary invite link for a chat; any previously generated primary link is revoked. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. Returns the new invite link as String on success.
+     * 
+     * Shortcut of `bot.exportChatInviteLink()`.
+     * 
+     * @returns {Promise<string>}
+     */ 
+    async exportChatInviteLink(){
+        return await Context.bot.exportChatInviteLink({chat_id: this.id});
+    }
+
+    /**
+     * Use this method to create an additional invite link for a chat. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. The link can be revoked using the method revokeChatInviteLink. Returns the new invite link as ChatInviteLink object.
+     * 
+     * Shortcut of `bot.createChatInviteLink()`.
+     * 
+     * @param {{name?: string, expire_date?: number, member_limit?: number, creates_join_request?: boolean}} config 
+     * @returns {Promise<ChatInviteLink>}
+     */ 
+    async createChatInviteLink(config){
+        return await Context.bot.createChatInviteLink({chat_id: this.id, ...config});
+    }
+
+    /**
+     * Use this method to revoke an invite link created by the bot. If the primary link is revoked, a new link is automatically generated. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. Returns the revoked invite link as ChatInviteLink object.
+     * 
+     * Shortcut of `bot.revokeChatInviteLink()`.
+     * 
+     * @param {{invite_link: string}} config 
+     * @returns {Promise<ChatInviteLink>}
+     */ 
+    async revokeChatInviteLink(config){
+        return await Context.bot.revokeChatInviteLink({chat_id: this.id, ...config});
+    }
+
+    /**
+     * Use this method to edit a non-primary invite link created by the bot. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. Returns the edited invite link as a ChatInviteLink object.
+     * 
+     * Shortcut of `bot.editChatInviteLink()`.
+     * 
+     * @param {{invite_link: string, name?: string, expire_date?: number, member_limit?: number, creates_join_request?: boolean}} config 
+     * @returns {Promise<ChatInviteLink>}
+     */ 
+    async editChatInviteLink(config){
+        return await Context.bot.editChatInviteLink({chat_id: this.id, ...config});
+    }
+
+    /**
+     * Use this method to approve a chat join request. The bot must be an administrator in the chat for this to work and must have the can_invite_users administrator right. Returns True on success.
+     * 
+     * Shortcut of `bot.approveChatJoinRequest()`.
+     * 
+     * @param {{user_id: number}} config 
+     * @returns {Promise<boolean>}
+     */ 
+    async approveChatJoinRequest(config){
+        return await Context.bot.approveChatJoinRequest({chat_id: this.id, ...config});
+    }
+
+    /**
+     * Use this method to decline a chat join request. The bot must be an administrator in the chat for this to work and must have the can_invite_users administrator right. Returns True on success.
+     * 
+     * Shortcut of `bot.declineChatJoinRequest()`.
+     * 
+     * @param {{user_id: number}} config 
+     * @returns {Promise<boolean>}
+     */ 
+    async declineChatJoinRequest(config){
+        return await Context.bot.declineChatJoinRequest({chat_id: this.id, ...config});
+    }
+
+    /**
+     * Use this method to set a tag for a regular member in a group or a supergroup. The bot must be an administrator in the chat for this to work and must have the can_manage_tags administrator right. Returns True on success.
+     * 
+     * Shortcut of `bot.setChatMemberTag()`.
+     * 
+     * @param {{user_id: number, tag: string}} config 
+     * @returns {Promise<boolean>}
+     */ 
+    async setChatMemberTag(config){
+        return await Context.bot.setChatMemberTag({chat_id: this.id, ...config});
+    }
 }
 
 /**
@@ -454,6 +986,9 @@ class ChatPhoto {
     get big_file_unique_id(){return this.chat_photo?.big_file_unique_id;}
 }
 
+/**
+ * This object represents a point on the map.
+ */
 class Location {
     constructor (location){
         this.location = location;
@@ -649,6 +1184,12 @@ class ReactionTypePaid {
     get type(){return this.reaction_type_paid?.type;}
 }
 
+/**
+ * This object describes the type of a reaction. Currently, it can be one of
+- ReactionTypeEmoji
+- ReactionTypeCustomEmoji
+- ReactionTypePaid
+ */
 class ReactionType {
     constructor(reaction_type) {
         const typeToClassMap = {
@@ -763,6 +1304,9 @@ class ChatPermissions {
     }
 }
 
+/**
+ * Represents a location to which a chat is connected.
+ */
 class ChatLocation {
     constructor (chat_location){
         this.chat_location = chat_location;
@@ -1006,6 +1550,26 @@ class ChatFullInfo {
      * @returns {ChatLocation}
      */
     get location(){return new ChatLocation(this.chat_full_info?.location);}
+    /**
+     * Optional. For private chats, the rating of the user if any.
+     * @returns {UserRating}
+     */
+    get rating(){return this.chat_full_info?.rating ? new UserRating(this.chat_full_info.rating) : null;}
+    /**
+     * Optional. For private chats, the first audio added to the profile of the user.
+     * @returns {Audio}
+     */
+    get first_profile_audio(){return this.chat_full_info?.first_profile_audio ? new Audio(this.chat_full_info.first_profile_audio) : null;}
+    /**
+     * Optional. The color scheme based on a unique gift that must be used for the chat's name, message replies and link previews.
+     * @returns {UniqueGiftColors}
+     */
+    get unique_gift_colors(){return this.chat_full_info?.unique_gift_colors ? new Audio(this.chat_full_info.unique_gift_colors) : null;}
+    /**
+     * Optional. The number of Telegram Stars a general user have to pay to send a message to the chat.
+     * @returns {number}
+     */
+    get paid_message_star_count(){return this.chat_full_info?.paid_message_star_count ? new Audio(this.chat_full_info.paid_message_star_count) : null;}
 }
 
 /**
@@ -1103,6 +1667,55 @@ class Video {
 }
 
 /**
+ * This object represents a video file of a specific quality.
+ */
+class VideoQuality {
+    constructor(video_quality) {
+        this.video_quality = video_quality;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Identifier for this file, which can be used to download or reuse the file.
+     * @returns {string}
+     */
+    get file_id(){return this.video_quality?.file_id};
+
+    /**
+     * Unique identifier for this file, which is supposed to be the same over time and for different bots. Can't be used to download or reuse the file.
+     * @returns {string}
+     */
+    get file_unique_id(){return this.video_quality?.file_unique_id};
+
+    /**
+     * Video width.
+     * @returns {number}
+     */
+    get width(){return this.video_quality?.width};
+
+    /**
+     * Video height.
+     * @returns {number}
+     */
+    get height(){return this.video_quality?.height};
+
+    /**
+     * Codec that was used to encode the video, for example, “h264”, “h265”, or “av01”.
+     * @returns {string}
+     */
+    get codec(){return this.video_quality?.codec};
+
+    /**
+     * Optional. File size in bytes. It can be bigger than 2^31 and some programming languages may have difficulty/silent defects in interpreting it. But it has at most 52 significant bits, so a signed 64-bit integer or double-precision float type are safe for storing this value.
+     * @returns {number}
+     */
+    get file_size(){return this.video_quality?.file_size};
+}
+
+/**
  * Describes the options used for link preview generation.
  */
 class LinkPreviewOptions {
@@ -1191,6 +1804,9 @@ class InlineKeyboardButton {
     }
 }
 
+/**
+ * This object represents an inline keyboard that appears right next to the message it belongs to.
+ */
 class InlineKeyboardMarkup {
     /**
      * @constructor
@@ -1216,6 +1832,9 @@ class InlineKeyboardMarkup {
     }
 }
 
+/**
+ * This object represents one size of a photo or a file / sticker thumbnail.
+ */
 class PhotoSize {
     constructor(photo_size){
         this.photo_size = photo_size;
@@ -1248,6 +1867,9 @@ class UserProfilePhotos {
     get photos(){return this.user_profile_photos?.photos.map(photo => new PhotoSize(photo));}
 }
 
+/**
+ * This object represents one special entity in a text message. For example, hashtags, usernames, URLs, etc.
+ */
 class MessageEntity {
     constructor(message_entity){
         this.message_entity = message_entity;
@@ -1938,6 +2560,17 @@ class InputMediaVideo {
     }
 }
 
+/**
+ * This object contains information about one member of a chat. Currently, the following 6 types of chat members are supported:
+
+- ChatMemberOwner
+- ChatMemberAdministrator
+- ChatMemberMember
+- ChatMemberRestricted
+- ChatMemberLeft
+- ChatMemberBanned
+
+ */
 class ChatMember {
     /** Owner of the group or channel. */
     static OWNER = "owner";
@@ -1978,6 +2611,9 @@ class ChatMember {
     }
 }
 
+/**
+ * Represents a chat member that owns the chat and has all administrator privileges.
+ */
 class ChatMemberOwner {
     constructor (chat_member_owner) {
         this.chat_member_owner = chat_member_owner;
@@ -2012,6 +2648,9 @@ class ChatMemberOwner {
 
 }
 
+/**
+ * Represents a chat member that has some additional privileges.
+ */
 class ChatMemberAdministrator {
     constructor (chat_administrator){
         this.chat_administrator = chat_administrator;
@@ -2121,6 +2760,9 @@ class ChatMemberAdministrator {
 
 }
 
+/**
+ * Represents a chat member that has no additional privileges or restrictions.
+ */
 class ChatMemberMember {
     constructor (chat_member_member){
         this.chat_member_member = chat_member_member;
@@ -2149,6 +2791,9 @@ class ChatMemberMember {
     get until_date(){return this.chat_member_member.hasOwnProperty("until_date")?this.chat_member_member.until_date:null;}
 }
 
+/**
+ * Represents a chat member that is under certain restrictions in the chat. Supergroups only.
+ */
 class ChatMemberRestricted {
     constructor (chat_member_restricted){
         this.chat_member_restricted = chat_member_restricted;
@@ -2252,6 +2897,9 @@ class ChatMemberRestricted {
     get until_date(){return this.chat_member_restricted.hasOwnProperty("until_date")?this.chat_member_restricted.until_date:null;}
 }
 
+/**
+ * Represents a chat member that isn't currently a member of the chat, but may join it themselves.
+ */
 class ChatMemberLeft {
     constructor (chat_member_left) {
         this.chat_member_left = chat_member_left;
@@ -2274,6 +2922,9 @@ class ChatMemberLeft {
     get user(){return this.chat_member_left.hasOwnProperty("user")? new User(this.chat_member_left.user) : null};
 }
 
+/**
+ * Represents a chat member that was banned in the chat and can't return to the chat or view chat messages.
+ */
 class ChatMemberBanned {
     constructor (chat_member_banned) {
         this.chat_member_banned = chat_member_banned;
@@ -2417,35 +3068,1685 @@ class ChatMemberUpdated {
     get via_chat_folder_invite_link(){return this.chat_member_updated?.via_chat_folder_invite_link};
 }
 
+/**
+ * This object contains information about the quoted part of a message that is replied to by the given message.
+ */
+class TextQuote {
+    constructor(text_quote) {
+        this.text_quote = text_quote
+    }
+    /**
+     * Text of the quoted part of a message that is replied to by the given message.
+     * @returns {string}
+     */
+    get text(){return this.text_quote?.text};
+    /**
+     * Optional. Special entities that appear in the quote. Currently, only bold, italic, underline, strikethrough, spoiler, custom_emoji, and date_time entities are kept in quotes.
+     * @returns {Array<MessageEntity>}
+     */
+    get entities(){return this.text_quote?.entities.map(entity => new MessageEntity(entity))};
+    /**
+     * Approximate quote position in the original message in UTF-16 code units as specified by the sender.
+     * @returns {number}
+     */
+    get position(){return this.text_quote?.position};
+    /**
+     * Optional. True, if the quote was chosen manually by the message sender. Otherwise, the quote was added automatically by the server.
+     * @returns {boolean}
+     */
+    get is_manual(){return this.text_quote?.is_manual};
+}
+
+/**
+ * This object represents an animation file (GIF or H.264/MPEG-4 AVC video without sound).
+ */
+class Animation {
+    constructor(animation) {
+        this.animation = animation;
+    }
+    /**
+     * Identifier for this file, which can be used to download or reuse the file.
+     * @returns {string}
+     */
+    get file_id(){return this.animation?.file_id};
+    /**
+     * Unique identifier for this file, which is supposed to be the same over time and for different bots. Can't be used to download or reuse the file.
+     * @returns {string}
+     */
+    get file_unique_id(){return this.animation?.file_unique_id};
+    /**
+     * Video width as defined by the sender.
+     * @returns {number}
+     */
+    get width(){return this.animation?.width};
+    /**
+     * Video height as defined by the sender.
+     * @returns {number}
+     */
+    get height(){return this.animation?.height};
+    /**
+     * Duration of the video in seconds as defined by the sender.
+     * @returns {number}
+     */
+    get duration(){return this.animation?.duration};
+    /**
+     * Optional. Animation thumbnail as defined by the sender.
+     * @returns {PhotoSize}
+     */
+    get thumbnail(){return new PhotoSize(this.animation?.thumbnail)};
+    /**
+     * Optional. Original animation filename as defined by the sender.
+     * @returns {string}
+     */
+    get file_name(){return this.animation?.file_name};
+    /**
+     * Optional. MIME type of the file as defined by the sender.
+     * @returns {string}
+     */
+    get mime_type(){return this.animation?.mime_type};
+    /**
+     * Optional. File size in bytes. It can be bigger than 2^31 and some programming languages may have difficulty/silent defects in interpreting it. But it has at most 52 significant bits, so a signed 64-bit integer or double-precision float type are safe for storing this value.
+     * @returns {number}
+     */
+    get file_size(){return this.animation?.file_size};
+}
+
+/**
+ * This object represents an audio file to be treated as music by the Telegram clients.
+ */
+class Audio {
+    constructor(audio) {
+        this.audio = audio;
+    }
+    /**
+     * Identifier for this file, which can be used to download or reuse the file.
+     * @returns {string}
+     */
+    get file_id(){return this.audio?.file_id};
+    /**
+     * Unique identifier for this file, which is supposed to be the same over time and for different bots. Can't be used to download or reuse the file.
+     * @returns {string}
+     */
+    get file_unique_id(){return this.audio?.file_unique_id};
+    /**
+     * Duration of the audio in seconds as defined by the sender.
+     * @returns {number}
+     */
+    get duration(){return this.audio?.duration};
+    /**
+     * Optional. Performer of the audio as defined by the sender or by audio tags.
+     * @returns {string}
+     */
+    get performer(){return this.audio?.performer};
+    /**
+     * Optional. Title of the audio as defined by the sender or by audio tags.
+     * @returns {string}
+     */
+    get title(){return this.audio?.title};
+    /**
+     * Optional. Original audio filename as defined by the sender.
+     * @returns {string}
+     */
+    get file_name(){return this.audio?.file_name};
+    /**
+     * Optional. MIME type of the file as defined by the sender.
+     * @returns {string}
+     */
+    get mime_type(){return this.audio?.mime_type};
+    /**
+     * Optional. File size in bytes. It can be bigger than 2^31 and some programming languages may have difficulty/silent defects in interpreting it. But it has at most 52 significant bits, so a signed 64-bit integer or double-precision float type are safe for storing this value.
+     * @returns {number}
+     */
+    get file_size(){return this.audio?.file_size};
+    /**
+     * Optional. Thumbnail of the album cover to which the music file belongs.
+     * @returns {PhotoSize}
+     */
+    get thumbnail(){return new PhotoSize(this.audio?.thumbnail)};
+}
+
+/**
+ * The paid media isn't available before the payment.
+ */
+class PaidMediaPreview {
+    constructor(paid_media_preview) {
+        this.paid_media_preview = paid_media_preview;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Type of the paid media, always "preview".
+     * @returns {string}
+     */
+    get type(){return "preview"};
+
+    /**
+     * Optional. Media width as defined by the sender.
+     * @returns {number}
+     */
+    get width(){return this.paid_media_preview?.width};
+
+    /**
+     * Optional. Media height as defined by the sender.
+     * @returns {number}
+     */
+    get height(){return this.paid_media_preview?.height};
+
+    /**
+     * Optional. Duration of the media in seconds as defined by the sender.
+     * @returns {number}
+     */
+    get duration(){return this.paid_media_preview?.duration};
+}
+
+/**
+ * The paid media is a photo.
+ */
+class PaidMediaPhoto {
+    constructor(paid_media_photo) {
+        this.paid_media_photo = paid_media_photo;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Type of the paid media, always "photo".
+     * @returns {string}
+     */
+    get type(){return "photo"};
+
+    /**
+     * The photo.
+     * @returns {PhotoSize[]}
+     */
+    get photo(){
+        return this.paid_media_photo?.photo?.map(p => new PhotoSize(p));
+    };
+}
+
+/**
+ * The paid media is a video.
+ */
+class PaidMediaVideo {
+    constructor(paid_media_video) {
+        this.paid_media_video = paid_media_video;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Type of the paid media, always "video".
+     * @returns {string}
+     */
+    get type(){return "video"};
+
+    /**
+     * The video.
+     * @returns {Video}
+     */
+    get video(){
+        return this.paid_media_video?.video
+            ? new Video(this.paid_media_video.video)
+            : null;
+    };
+}
+
+/**
+ * This object describes paid media. Currently, it can be one of
+
+- PaidMediaPreview
+- PaidMediaPhoto
+- PaidMediaVideo
+
+ */
+class PaidMedia {
+    /** The paid media isn't available before the payment. */
+    static PREVIEW = "preview";
+    /** The paid media is a photo. */
+    static PHOTO = "photo";
+    /** The paid media is a video. */
+    static VIDEO = "video";
+
+    constructor(data) {
+        const typeToClassMap = {
+            "preview": PaidMediaPreview,
+            "photo": PaidMediaPhoto,
+            "video": PaidMediaVideo,
+        };
+
+        const TargetClass = typeToClassMap[data?.type] || PaidMedia;
+
+        if (!TargetClass) {
+            throw new Error("Paid media type not recognized.");
+        }
+
+        const instance = new TargetClass(data);
+
+        Object.setPrototypeOf(this, TargetClass.prototype);
+        Object.assign(this, instance);
+
+        return this;
+    }
+}
+
+/**
+ * Describes the paid media added to a message.
+ */
+class PaidMediaInfo {
+    constructor(paidMediaInfo) {
+        this.paidMediaInfo = paidMediaInfo;
+    }
+
+    /**
+     * The number of Telegram Stars that must be paid to buy access to the media.
+     * @returns {number}
+     */
+    get star_count(){return this.paidMediaInfo?.star_count};
+
+    /**
+     * Information about the paid media.
+     * @returns {PaidMedia[]}
+     */
+    get paid_media(){
+        return this.paidMediaInfo?.paid_media?.map(pm => new PaidMedia(pm));
+    };
+}
+
+/**
+ * This object describes the position on faces where a mask should be placed by default.
+ */
+class MaskPosition {
+    constructor(mask_position) {
+        this.mask_position = mask_position;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * The part of the face relative to which the mask should be placed.
+     * @returns {string}
+     */
+    get point(){return this.mask_position?.point};
+
+    /**
+     * Shift by X-axis measured in widths of the mask scaled to the face size.
+     * @returns {number}
+     */
+    get x_shift(){return this.mask_position?.x_shift};
+
+    /**
+     * Shift by Y-axis measured in heights of the mask scaled to the face size.
+     * @returns {number}
+     */
+    get y_shift(){return this.mask_position?.y_shift};
+
+    /**
+     * Mask scaling coefficient.
+     * @returns {number}
+     */
+    get scale(){return this.mask_position?.scale};
+}
+
+/**
+ * This object represents a sticker.
+ */
+class Sticker {
+    constructor(sticker) {
+        this.sticker = sticker;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Identifier for this file, which can be used to download or reuse the file.
+     * @returns {string}
+     */
+    get file_id(){return this.sticker?.file_id};
+
+    /**
+     * Unique identifier for this file.
+     * @returns {string}
+     */
+    get file_unique_id(){return this.sticker?.file_unique_id};
+
+    /**
+     * Type of the sticker.
+     * @returns {string}
+     */
+    get type(){return this.sticker?.type};
+
+    /**
+     * Sticker width.
+     * @returns {number}
+     */
+    get width(){return this.sticker?.width};
+
+    /**
+     * Sticker height.
+     * @returns {number}
+     */
+    get height(){return this.sticker?.height};
+
+    /**
+     * True, if the sticker is animated.
+     * @returns {boolean}
+     */
+    get is_animated(){return this.sticker?.is_animated};
+
+    /**
+     * True, if the sticker is a video sticker.
+     * @returns {boolean}
+     */
+    get is_video(){return this.sticker?.is_video};
+
+    /**
+     * Optional. Sticker thumbnail.
+     * @returns {PhotoSize}
+     */
+    get thumbnail(){
+        return this.sticker?.thumbnail
+            ? new PhotoSize(this.sticker.thumbnail)
+            : null;
+    }
+
+    /**
+     * Optional. Emoji associated with the sticker.
+     * @returns {string}
+     */
+    get emoji(){return this.sticker?.emoji};
+
+    /**
+     * Optional. Name of the sticker set.
+     * @returns {string}
+     */
+    get set_name(){return this.sticker?.set_name};
+
+    /**
+     * Optional. Premium animation for the sticker.
+     * @returns {_File}
+     */
+    get premium_animation(){
+        return this.sticker?.premium_animation
+            ? new _File(this.sticker.premium_animation)
+            : null;
+    }
+
+    /**
+     * Optional. Mask position.
+     * @returns {MaskPosition}
+     */
+    get mask_position(){
+        return this.sticker?.mask_position
+            ? new MaskPosition(this.sticker.mask_position)
+            : null;
+    }
+
+    /**
+     * Optional. Unique identifier for custom emoji.
+     * @returns {string}
+     */
+    get custom_emoji_id(){return this.sticker?.custom_emoji_id};
+
+    /**
+     * Optional. True, if the sticker must be repainted.
+     * @returns {boolean}
+     */
+    get needs_repainting(){return this.sticker?.needs_repainting};
+
+    /**
+     * Optional. File size in bytes.
+     * @returns {number}
+     */
+    get file_size(){return this.sticker?.file_size};
+}
+
+/**
+ * This object represents a story.
+ */
+class Story {
+    constructor(story) {
+        this.story = story;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Chat that posted the story.
+     * @returns {Chat}
+     */
+    get chat(){
+        return this.story?.chat
+            ? new Chat(this.story.chat)
+            : null;
+    }
+
+    /**
+     * Unique identifier for the story in the chat.
+     * @returns {number}
+     */
+    get id(){return this.story?.id};
+}
+
+/**
+ * This object represents a video message.
+ */
+class VideoNote {
+    constructor(video_note) {
+        this.video_note = video_note;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Identifier for this file, which can be used to download or reuse the file.
+     * @returns {string}
+     */
+    get file_id(){return this.video_note?.file_id};
+
+    /**
+     * Unique identifier for this file.
+     * @returns {string}
+     */
+    get file_unique_id(){return this.video_note?.file_unique_id};
+
+    /**
+     * Video width and height (diameter of the video message).
+     * @returns {number}
+     */
+    get length(){return this.video_note?.length};
+
+    /**
+     * Duration of the video in seconds.
+     * @returns {number}
+     */
+    get duration(){return this.video_note?.duration};
+
+    /**
+     * Optional. Video thumbnail.
+     * @returns {PhotoSize}
+     */
+    get thumbnail(){
+        return this.video_note?.thumbnail
+            ? new PhotoSize(this.video_note.thumbnail)
+            : null;
+    }
+
+    /**
+     * Optional. File size in bytes.
+     * @returns {number}
+     */
+    get file_size(){return this.video_note?.file_size};
+}
+
+/**
+ * This object represents a voice note.
+ */
+class Voice {
+    constructor(voice) {
+        this.voice = voice;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Identifier for this file, which can be used to download or reuse the file.
+     * @returns {string}
+     */
+    get file_id(){return this.voice?.file_id};
+
+    /**
+     * Unique identifier for this file.
+     * @returns {string}
+     */
+    get file_unique_id(){return this.voice?.file_unique_id};
+
+    /**
+     * Duration of the audio in seconds.
+     * @returns {number}
+     */
+    get duration(){return this.voice?.duration};
+
+    /**
+     * Optional. MIME type of the file.
+     * @returns {string}
+     */
+    get mime_type(){return this.voice?.mime_type};
+
+    /**
+     * Optional. File size in bytes.
+     * @returns {number}
+     */
+    get file_size(){return this.voice?.file_size};
+}
+
+/**
+ * Describes a task in a checklist.
+ */
+class ChecklistTask {
+    constructor(checklist_task) {
+        this.checklist_task = checklist_task;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Unique identifier of the task.
+     * @returns {number}
+     */
+    get id(){return this.checklist_task?.id};
+
+    /**
+     * Text of the task.
+     * @returns {string}
+     */
+    get text(){return this.checklist_task?.text};
+
+    /**
+     * Optional. Special entities that appear in the task text.
+     * @returns {MessageEntity[]}
+     */
+    get text_entities(){
+        return this.checklist_task?.text_entities?.map(e => new MessageEntity(e));
+    }
+
+    /**
+     * Optional. User that completed the task.
+     * @returns {User}
+     */
+    get completed_by_user(){
+        return this.checklist_task?.completed_by_user
+            ? new User(this.checklist_task.completed_by_user)
+            : null;
+    }
+
+    /**
+     * Optional. Chat that completed the task.
+     * @returns {Chat}
+     */
+    get completed_by_chat(){
+        return this.checklist_task?.completed_by_chat
+            ? new Chat(this.checklist_task.completed_by_chat)
+            : null;
+    }
+
+    /**
+     * Optional. Completion date (Unix timestamp).
+     * @returns {number}
+     */
+    get completion_date(){return this.checklist_task?.completion_date};
+}
+
+/**
+ * Describes a checklist.
+ */
+class Checklist {
+    constructor(checklist) {
+        this.checklist = checklist;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Title of the checklist.
+     * @returns {string}
+     */
+    get title(){return this.checklist?.title};
+
+    /**
+     * Optional. Special entities that appear in the checklist title.
+     * @returns {MessageEntity[]}
+     */
+    get title_entities(){
+        return this.checklist?.title_entities?.map(e => new MessageEntity(e));
+    }
+
+    /**
+     * List of tasks in the checklist.
+     * @returns {ChecklistTask[]}
+     */
+    get tasks(){
+        return this.checklist?.tasks?.map(t => new ChecklistTask(t));
+    }
+
+    /**
+     * Optional. True, if users other than the creator can add tasks.
+     * @returns {boolean}
+     */
+    get others_can_add_tasks(){return this.checklist?.others_can_add_tasks};
+
+    /**
+     * Optional. True, if users other than the creator can mark tasks as done.
+     * @returns {boolean}
+     */
+    get others_can_mark_tasks_as_done(){return this.checklist?.others_can_mark_tasks_as_done};
+}
+
+/**
+ * Describes a task to add to a checklist.
+ */
+class InputChecklistTask {
+    constructor(input_checklist_task) {
+        this.input_checklist_task = input_checklist_task;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Unique identifier of the task.
+     * @returns {number}
+     */
+    get id(){return this.input_checklist_task?.id};
+
+    /**
+     * Text of the task.
+     * @returns {string}
+     */
+    get text(){return this.input_checklist_task?.text};
+
+    /**
+     * Optional. Mode for parsing entities in the text.
+     * @returns {string}
+     */
+    get parse_mode(){return this.input_checklist_task?.parse_mode};
+
+    /**
+     * Optional. List of special entities that appear in the text.
+     * @returns {MessageEntity[]}
+     */
+    get text_entities(){
+        return this.input_checklist_task?.text_entities?.map(e => new MessageEntity(e));
+    }
+}
+
+/**
+ * Describes a checklist to create.
+ */
+class InputChecklist {
+    constructor(input_checklist) {
+        this.input_checklist = input_checklist;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Title of the checklist.
+     * @returns {string}
+     */
+    get title(){return this.input_checklist?.title};
+
+    /**
+     * Optional. Mode for parsing entities in the title.
+     * @returns {string}
+     */
+    get parse_mode(){return this.input_checklist?.parse_mode};
+
+    /**
+     * Optional. List of special entities that appear in the title.
+     * @returns {MessageEntity[]}
+     */
+    get title_entities(){
+        return this.input_checklist?.title_entities?.map(e => new MessageEntity(e));
+    }
+
+    /**
+     * List of tasks in the checklist.
+     * @returns {InputChecklistTask[]}
+     */
+    get tasks(){
+        return this.input_checklist?.tasks?.map(t => new InputChecklistTask(t));
+    }
+
+    /**
+     * Optional. True if other users can add tasks.
+     * @returns {boolean}
+     */
+    get others_can_add_tasks(){return this.input_checklist?.others_can_add_tasks};
+
+    /**
+     * Optional. True if other users can mark tasks as done or not done.
+     * @returns {boolean}
+     */
+    get others_can_mark_tasks_as_done(){return this.input_checklist?.others_can_mark_tasks_as_done};
+}
+
+/**
+ * Describes a service message about checklist tasks marked as done or not done.
+ */
+class ChecklistTasksDone {
+    constructor(checklist_tasks_done) {
+        this.checklist_tasks_done = checklist_tasks_done;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Optional. Message containing the checklist whose tasks were updated.
+     * @returns {Message}
+     */
+    get checklist_message(){
+        return this.checklist_tasks_done?.checklist_message
+            ? new Message(this.checklist_tasks_done.checklist_message)
+            : null;
+    }
+
+    /**
+     * Optional. Identifiers of the tasks that were marked as done.
+     * @returns {number[]}
+     */
+    get marked_as_done_task_ids(){
+        return this.checklist_tasks_done?.marked_as_done_task_ids;
+    }
+
+    /**
+     * Optional. Identifiers of the tasks that were marked as not done.
+     * @returns {number[]}
+     */
+    get marked_as_not_done_task_ids(){
+        return this.checklist_tasks_done?.marked_as_not_done_task_ids;
+    }
+}
+
+/**
+ * Describes a service message about tasks added to a checklist.
+ */
+class ChecklistTasksAdded {
+    constructor(checklist_tasks_added) {
+        this.checklist_tasks_added = checklist_tasks_added;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Optional. Message containing the checklist to which the tasks were added.
+     * @returns {Message}
+     */
+    get checklist_message(){
+        return this.checklist_tasks_added?.checklist_message
+            ? new Message(this.checklist_tasks_added.checklist_message)
+            : null;
+    }
+
+    /**
+     * List of tasks added to the checklist.
+     * @returns {ChecklistTask[]}
+     */
+    get tasks(){
+        return this.checklist_tasks_added?.tasks?.map(t => new ChecklistTask(t));
+    }
+}
+
+/**
+ * This object represents a phone contact.
+ */
+class Contact {
+    constructor(contact) {
+        this.contact = contact;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Contact's phone number.
+     * @returns {string}
+     */
+    get phone_number(){return this.contact?.phone_number};
+
+    /**
+     * Contact's first name.
+     * @returns {string}
+     */
+    get first_name(){return this.contact?.first_name};
+
+    /**
+     * Optional. Contact's last name.
+     * @returns {string}
+     */
+    get last_name(){return this.contact?.last_name};
+
+    /**
+     * Optional. Contact's user identifier in Telegram.
+     * @returns {number}
+     */
+    get user_id(){return this.contact?.user_id};
+
+    /**
+     * Optional. Additional data about the contact in the form of a vCard.
+     * @returns {string}
+     */
+    get vcard(){return this.contact?.vcard};
+}
+
+/**
+ * This object represents an animated emoji that displays a random value.
+ */
+class Dice {
+    constructor(dice) {
+        this.dice = dice;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Emoji on which the dice throw animation is based.
+     * @returns {string}
+     */
+    get emoji(){return this.dice?.emoji};
+
+    /**
+     * Value of the dice, 1-6 for “🎲”, “🎯” and “🎳” base emoji, 1-5 for “🏀” and “⚽” base emoji, 1-64 for “🎰” base emoji.
+     * @returns {number}
+     */
+    get value(){return this.dice?.value};
+}
+
+/**
+ * This object represents a game. Use BotFather to create and edit games, their short names will act as unique identifiers.
+ */
+class Game {
+    constructor(game) {
+        this.game = game;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Title of the game.
+     * @returns {string}
+     */
+    get title(){return this.game?.title};
+
+    /**
+     * Description of the game.
+     * @returns {string}
+     */
+    get description(){return this.game?.description};
+
+    /**
+     * Photo that will be displayed in the game message in chats.
+     * @returns {PhotoSize[]}
+     */
+    get photo(){
+        return this.game?.photo?.map(p => new PhotoSize(p));
+    }
+
+    /**
+     * Optional. Brief description of the game or high scores included in the game message. Can be automatically edited to include current high scores for the game when the bot calls setGameScore, or manually edited using editMessageText. 0-4096 characters.
+     * @returns {string}
+     */
+    get text(){return this.game?.text};
+
+    /**
+     * Optional. Special entities that appear in text, such as usernames, URLs, bot commands, etc.
+     * @returns {MessageEntity[]}
+     */
+    get text_entities(){
+        return this.game?.text_entities?.map(e => new MessageEntity(e));
+    }
+
+    /**
+     * Optional. Animation that will be displayed in the game message in chats. Upload via BotFather.
+     * @returns {Animation}
+     */
+    get animation(){
+        return this.game?.animation
+            ? new Animation(this.game.animation)
+            : null;
+    }
+}
+
+/**
+ * This object represents a message about a scheduled giveaway.
+ */
+class Giveaway {
+    constructor(giveaway) {
+        this.giveaway = giveaway;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * The list of chats which the user must join to participate in the giveaway.
+     * @returns {Chat[]}
+     */
+    get chats(){
+        return this.giveaway?.chats?.map(c => new Chat(c));
+    }
+
+    /**
+     * Point in time (Unix timestamp) when winners of the giveaway will be selected.
+     * @returns {number}
+     */
+    get winners_selection_date(){return this.giveaway?.winners_selection_date};
+
+    /**
+     * The number of users which are supposed to be selected as winners of the giveaway.
+     * @returns {number}
+     */
+    get winner_count(){return this.giveaway?.winner_count};
+
+    /**
+     * Optional. True, if only users who join the chats after the giveaway started should be eligible to win.
+     * @returns {boolean}
+     */
+    get only_new_members(){return this.giveaway?.only_new_members};
+
+    /**
+     * Optional. True, if the list of giveaway winners will be visible to everyone.
+     * @returns {boolean}
+     */
+    get has_public_winners(){return this.giveaway?.has_public_winners};
+
+    /**
+     * Optional. Description of additional giveaway prize.
+     * @returns {string}
+     */
+    get prize_description(){return this.giveaway?.prize_description};
+
+    /**
+     * Optional. A list of two-letter ISO 3166-1 alpha-2 country codes indicating the countries from which eligible users for the giveaway must come. If empty, then all users can participate in the giveaway. Users with a phone number that was bought on Fragment can always participate in giveaways.
+     * @returns {string[]}
+     */
+    get country_codes(){return this.giveaway?.country_codes};
+
+    /**
+     * Optional. The number of Telegram Stars to be split between giveaway winners; for Telegram Star giveaways only.
+     * @returns {number}
+     */
+    get prize_star_count(){return this.giveaway?.prize_star_count};
+
+    /**
+     * Optional. The number of months the Telegram Premium subscription won from the giveaway will be active for; for Telegram Premium giveaways only.
+     * @returns {number}
+     */
+    get premium_subscription_month_count(){return this.giveaway?.premium_subscription_month_count};
+}
+
+/**
+ * This object represents a message about the completion of a giveaway with public winners.
+ */
+class GiveawayWinners {
+    constructor(giveaway_winners) {
+        this.giveaway_winners = giveaway_winners;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * The chat that created the giveaway.
+     * @returns {Chat}
+     */
+    get chat(){
+        return this.giveaway_winners?.chat
+            ? new Chat(this.giveaway_winners.chat)
+            : null;
+    }
+
+    /**
+     * Identifier of the message with the giveaway in the chat.
+     * @returns {number}
+     */
+    get giveaway_message_id(){return this.giveaway_winners?.giveaway_message_id};
+
+    /**
+     * Point in time (Unix timestamp) when winners of the giveaway were selected.
+     * @returns {number}
+     */
+    get winners_selection_date(){return this.giveaway_winners?.winners_selection_date};
+
+    /**
+     * Total number of winners in the giveaway.
+     * @returns {number}
+     */
+    get winner_count(){return this.giveaway_winners?.winner_count};
+
+    /**
+     * List of up to 100 winners of the giveaway.
+     * @returns {User[]}
+     */
+    get winners(){
+        return this.giveaway_winners?.winners?.map(u => new User(u));
+    }
+
+    /**
+     * Optional. The number of other chats the user had to join in order to be eligible for the giveaway.
+     * @returns {number}
+     */
+    get additional_chat_count(){return this.giveaway_winners?.additional_chat_count};
+
+    /**
+     * Optional. The number of Telegram Stars that were split between giveaway winners; for Telegram Star giveaways only.
+     * @returns {number}
+     */
+    get prize_star_count(){return this.giveaway_winners?.prize_star_count};
+
+    /**
+     * Optional. The number of months the Telegram Premium subscription won from the giveaway will be active for; for Telegram Premium giveaways only.
+     * @returns {number}
+     */
+    get premium_subscription_month_count(){return this.giveaway_winners?.premium_subscription_month_count};
+
+    /**
+     * Optional. Number of undistributed prizes.
+     * @returns {number}
+     */
+    get unclaimed_prize_count(){return this.giveaway_winners?.unclaimed_prize_count};
+
+    /**
+     * Optional. True, if only users who had joined the chats after the giveaway started were eligible to win.
+     * @returns {boolean}
+     */
+    get only_new_members(){return this.giveaway_winners?.only_new_members};
+
+    /**
+     * Optional. True, if the giveaway was canceled because the payment for it was refunded.
+     * @returns {boolean}
+     */
+    get was_refunded(){return this.giveaway_winners?.was_refunded};
+
+    /**
+     * Optional. Description of additional giveaway prize.
+     * @returns {string}
+     */
+    get prize_description(){return this.giveaway_winners?.prize_description};
+}
+
+/**
+ * This object contains basic information about an invoice.
+ */
+class Invoice {
+    constructor(invoice) {
+        this.invoice = invoice;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Product name.
+     * @returns {string}
+     */
+    get title(){return this.invoice?.title};
+
+    /**
+     * Product description.
+     * @returns {string}
+     */
+    get description(){return this.invoice?.description};
+
+    /**
+     * Unique bot deep-linking parameter that can be used to generate this invoice.
+     * @returns {string}
+     */
+    get start_parameter(){return this.invoice?.start_parameter};
+
+    /**
+     * Three-letter ISO 4217 currency code, or “XTR” for payments in Telegram Stars.
+     * @returns {string}
+     */
+    get currency(){return this.invoice?.currency};
+
+    /**
+     * Total price in the smallest units of the currency (integer, not float/double). For example, for a price of US$ 1.45 pass amount = 145. See the exp parameter in currencies.json, it shows the number of digits past the decimal point for each currency (2 for the majority of currencies).
+     * @returns {number}
+     */
+    get total_amount(){return this.invoice?.total_amount};
+}
+
+/**
+ * This object contains information about one answer option in a poll.
+ */
+class PollOption {
+    constructor(poll_option) {
+        this.poll_option = poll_option;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Unique identifier of the option, persistent on option addition and deletion.
+     * @returns {string}
+     */
+    get persistent_id(){return this.poll_option?.persistent_id};
+
+    /**
+     * Option text, 1-100 characters.
+     * @returns {string}
+     */
+    get text(){return this.poll_option?.text};
+
+    /**
+     * Optional. Special entities that appear in the option text. Currently, only custom emoji entities are allowed in poll option texts.
+     * @returns {MessageEntity[]}
+     */
+    get text_entities(){
+        return this.poll_option?.text_entities?.map(e => new MessageEntity(e));
+    }
+
+    /**
+     * Number of users who voted for this option; may be 0 if unknown.
+     * @returns {number}
+     */
+    get voter_count(){return this.poll_option?.voter_count};
+
+    /**
+     * Optional. User who added the option; omitted if the option wasn't added by a user after poll creation.
+     * @returns {User}
+     */
+    get added_by_user(){
+        return this.poll_option?.added_by_user
+            ? new User(this.poll_option.added_by_user)
+            : null;
+    }
+
+    /**
+     * Optional. Chat that added the option; omitted if the option wasn't added by a chat after poll creation.
+     * @returns {Chat}
+     */
+    get added_by_chat(){
+        return this.poll_option?.added_by_chat
+            ? new Chat(this.poll_option.added_by_chat)
+            : null;
+    }
+
+    /**
+     * Optional. Point in time (Unix timestamp) when the option was added; omitted if the option existed in the original poll.
+     * @returns {number}
+     */
+    get addition_date(){return this.poll_option?.addition_date};
+}
+
+/**
+ * This object contains information about a poll.
+ */
+class Poll {
+    constructor(poll) {
+        this.poll = poll;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Unique poll identifier.
+     * @returns {string}
+     */
+    get id(){return this.poll?.id};
+
+    /**
+     * Poll question, 1-300 characters.
+     * @returns {string}
+     */
+    get question(){return this.poll?.question};
+
+    /**
+     * Optional. Special entities that appear in the question. Currently, only custom emoji entities are allowed in poll questions.
+     * @returns {MessageEntity[]}
+     */
+    get question_entities(){
+        return this.poll?.question_entities?.map(e => new MessageEntity(e));
+    }
+
+    /**
+     * List of poll options.
+     * @returns {PollOption[]}
+     */
+    get options(){
+        return this.poll?.options?.map(o => new PollOption(o));
+    }
+
+    /**
+     * Total number of users that voted in the poll.
+     * @returns {number}
+     */
+    get total_voter_count(){return this.poll?.total_voter_count};
+
+    /**
+     * True, if the poll is closed.
+     * @returns {boolean}
+     */
+    get is_closed(){return this.poll?.is_closed};
+
+    /**
+     * True, if the poll is anonymous.
+     * @returns {boolean}
+     */
+    get is_anonymous(){return this.poll?.is_anonymous};
+
+    /**
+     * Poll type, currently can be “regular” or “quiz”.
+     * @returns {string}
+     */
+    get type(){return this.poll?.type};
+
+    /**
+     * True, if the poll allows multiple answers.
+     * @returns {boolean}
+     */
+    get allows_multiple_answers(){return this.poll?.allows_multiple_answers};
+
+    /**
+     * True, if the poll allows to change the chosen answer options.
+     * @returns {boolean}
+     */
+    get allows_revoting(){return this.poll?.allows_revoting};
+
+    /**
+     * Optional. Array of 0-based identifiers of the correct answer options. Available only for polls in quiz mode which are closed or were sent (not forwarded) by the bot or to the private chat with the bot.
+     * @returns {number[]}
+     */
+    get correct_option_ids(){return this.poll?.correct_option_ids};
+
+    /**
+     * Optional. Text that is shown when a user chooses an incorrect answer or taps on the lamp icon in a quiz-style poll, 0-200 characters.
+     * @returns {string}
+     */
+    get explanation(){return this.poll?.explanation};
+
+    /**
+     * Optional. Special entities like usernames, URLs, bot commands, etc. that appear in the explanation.
+     * @returns {MessageEntity[]}
+     */
+    get explanation_entities(){
+        return this.poll?.explanation_entities?.map(e => new MessageEntity(e));
+    }
+
+    /**
+     * Optional. Amount of time in seconds the poll will be active after creation.
+     * @returns {number}
+     */
+    get open_period(){return this.poll?.open_period};
+
+    /**
+     * Optional. Point in time (Unix timestamp) when the poll will be automatically closed.
+     * @returns {number}
+     */
+    get close_date(){return this.poll?.close_date};
+
+    /**
+     * Optional. Description of the poll; for polls inside the Message object only.
+     * @returns {string}
+     */
+    get description(){return this.poll?.description};
+
+    /**
+     * Optional. Special entities like usernames, URLs, bot commands, etc. that appear in the description.
+     * @returns {MessageEntity[]}
+     */
+    get description_entities(){
+        return this.poll?.description_entities?.map(e => new MessageEntity(e));
+    }
+}
+
+/**
+ * This object represents a venue.
+ */
+class Venue {
+    constructor(venue) {
+        this.venue = venue;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Venue location. Can't be a live location.
+     * @returns {Location}
+     */
+    get location(){
+        return this.venue?.location
+            ? new Location(this.venue.location)
+            : null;
+    }
+
+    /**
+     * Name of the venue.
+     * @returns {string}
+     */
+    get title(){return this.venue?.title};
+
+    /**
+     * Address of the venue.
+     * @returns {string}
+     */
+    get address(){return this.venue?.address};
+
+    /**
+     * Optional. Foursquare identifier of the venue.
+     * @returns {string}
+     */
+    get foursquare_id(){return this.venue?.foursquare_id};
+
+    /**
+     * Optional. Foursquare type of the venue. (For example, “arts_entertainment/default”, “arts_entertainment/aquarium” or “food/icecream”.).
+     * @returns {string}
+     */
+    get foursquare_type(){return this.venue?.foursquare_type};
+
+    /**
+     * Optional. Google Places identifier of the venue.
+     * @returns {string}
+     */
+    get google_place_id(){return this.venue?.google_place_id};
+
+    /**
+     * Optional. Google Places type of the venue. (See supported types.).
+     * @returns {string}
+     */
+    get google_place_type(){return this.venue?.google_place_type};
+}
+
+/**
+ * This object contains information about a message that is being replied to,
+ * which may come from another chat or forum topic.
+ */
+class ExternalReplyInfo {
+    constructor(external_reply_info) {
+        this.external_reply_info = external_reply_info;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Origin of the message replied to by the given message.
+     * @returns {MessageOrigin}
+     */
+    get origin(){
+        return this.external_reply_info?.origin
+            ? new MessageOrigin(this.external_reply_info.origin)
+            : null;
+    }
+
+    /**
+     * Optional. Chat the original message belongs to.
+     * @returns {Chat}
+     */
+    get chat(){
+        return this.external_reply_info?.chat
+            ? new Chat(this.external_reply_info.chat)
+            : null;
+    }
+
+    /**
+     * Optional. Unique message identifier inside the original chat.
+     * @returns {number}
+     */
+    get message_id(){return this.external_reply_info?.message_id};
+
+    /**
+     * Optional. Options used for link preview generation.
+     * @returns {LinkPreviewOptions}
+     */
+    get link_preview_options(){
+        return this.external_reply_info?.link_preview_options
+            ? new LinkPreviewOptions(this.external_reply_info.link_preview_options)
+            : null;
+    }
+
+    /**
+     * Optional. Message is an animation.
+     * @returns {Animation}
+     */
+    get animation(){
+        return this.external_reply_info?.animation
+            ? new Animation(this.external_reply_info.animation)
+            : null;
+    }
+
+    /**
+     * Optional. Message is an audio file.
+     * @returns {Audio}
+     */
+    get audio(){
+        return this.external_reply_info?.audio
+            ? new Audio(this.external_reply_info.audio)
+            : null;
+    }
+
+    /**
+     * Optional. Message is a general file.
+     * @returns {Document}
+     */
+    get document(){
+        return this.external_reply_info?.document
+            ? new Document(this.external_reply_info.document)
+            : null;
+    }
+
+    /**
+     * Optional. Message contains paid media.
+     * @returns {PaidMediaInfo}
+     */
+    get paid_media(){
+        return this.external_reply_info?.paid_media
+            ? new PaidMediaInfo(this.external_reply_info.paid_media)
+            : null;
+    }
+
+    /**
+     * Optional. Message is a photo.
+     * @returns {PhotoSize[]}
+     */
+    get photo(){
+        return this.external_reply_info?.photo?.map(p => new PhotoSize(p));
+    }
+
+    /**
+     * Optional. Message is a sticker.
+     * @returns {Sticker}
+     */
+    get sticker(){
+        return this.external_reply_info?.sticker
+            ? new Sticker(this.external_reply_info.sticker)
+            : null;
+    }
+
+    /**
+     * Optional. Message is a forwarded story.
+     * @returns {Story}
+     */
+    get story(){
+        return this.external_reply_info?.story
+            ? new Story(this.external_reply_info.story)
+            : null;
+    }
+
+    /**
+     * Optional. Message is a video.
+     * @returns {Video}
+     */
+    get video(){
+        return this.external_reply_info?.video
+            ? new Video(this.external_reply_info.video)
+            : null;
+    }
+
+    /**
+     * Optional. Message is a video note.
+     * @returns {VideoNote}
+     */
+    get video_note(){
+        return this.external_reply_info?.video_note
+            ? new VideoNote(this.external_reply_info.video_note)
+            : null;
+    }
+
+    /**
+     * Optional. Message is a voice message.
+     * @returns {Voice}
+     */
+    get voice(){
+        return this.external_reply_info?.voice
+            ? new Voice(this.external_reply_info.voice)
+            : null;
+    }
+
+    /**
+     * Optional. True, if the message media is covered by a spoiler animation.
+     * @returns {boolean}
+     */
+    get has_media_spoiler(){return this.external_reply_info?.has_media_spoiler};
+
+    /**
+     * Optional. Message is a checklist.
+     * @returns {Checklist}
+     */
+    get checklist(){
+        return this.external_reply_info?.checklist
+            ? new Checklist(this.external_reply_info.checklist)
+            : null;
+    }
+
+    /**
+     * Optional. Message is a shared contact.
+     * @returns {Contact}
+     */
+    get contact(){
+        return this.external_reply_info?.contact
+            ? new Contact(this.external_reply_info.contact)
+            : null;
+    }
+
+    /**
+     * Optional. Message is a dice.
+     * @returns {Dice}
+     */
+    get dice(){
+        return this.external_reply_info?.dice
+            ? new Dice(this.external_reply_info.dice)
+            : null;
+    }
+
+    /**
+     * Optional. Message is a game.
+     * @returns {Game}
+     */
+    get game(){
+        return this.external_reply_info?.game
+            ? new Game(this.external_reply_info.game)
+            : null;
+    }
+
+    /**
+     * Optional. Message is a scheduled giveaway.
+     * @returns {Giveaway}
+     */
+    get giveaway(){
+        return this.external_reply_info?.giveaway
+            ? new Giveaway(this.external_reply_info.giveaway)
+            : null;
+    }
+
+    /**
+     * Optional. Giveaway with public winners.
+     * @returns {GiveawayWinners}
+     */
+    get giveaway_winners(){
+        return this.external_reply_info?.giveaway_winners
+            ? new GiveawayWinners(this.external_reply_info.giveaway_winners)
+            : null;
+    }
+
+    /**
+     * Optional. Message is an invoice.
+     * @returns {Invoice}
+     */
+    get invoice(){
+        return this.external_reply_info?.invoice
+            ? new Invoice(this.external_reply_info.invoice)
+            : null;
+    }
+
+    /**
+     * Optional. Message is a shared location.
+     * @returns {Location}
+     */
+    get location(){
+        return this.external_reply_info?.location
+            ? new Location(this.external_reply_info.location)
+            : null;
+    }
+
+    /**
+     * Optional. Message is a poll.
+     * @returns {Poll}
+     */
+    get poll(){
+        return this.external_reply_info?.poll
+            ? new Poll(this.external_reply_info.poll)
+            : null;
+    }
+
+    /**
+     * Optional. Message is a venue.
+     * @returns {Venue}
+     */
+    get venue(){
+        return this.external_reply_info?.venue
+            ? new Venue(this.external_reply_info.venue)
+            : null;
+    }
+}
+
 export {
-    Message,
-    User,
-    LinkPreviewOptions,
-    Chat,
-    Video,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
-    MessageEntity,
-    MessageOrigin,
-    MessageOriginChannel,
-    MessageOriginChat,
-    MessageOriginHiddenUser,
-    MessageOriginUser,
-    PhotoSize,
-    UserProfilePhotos,
-    Document,
-    CallbackQuery,
-    MaybeInaccessibleMessage,
-    InaccessibleMessage,
-    WebhookInfo,
     _File,
-    ReplyParameters,
-    InputFile,
-    InputMediaAnimation,
-    InputMediaAudio,
-    InputMediaDocument,
-    InputMediaPhoto,
-    InputMediaVideo,
+    Animation,
+    Audio,
+    Birthdate,
+    BusinessIntro,
+    BusinessLocation,
+    BusinessOpeningHours,
+    BusinessOpeningHoursInterval,
+    CallbackQuery,
+    Chat,
+    ChatFullInfo,
+    ChatInviteLink,
+    ChatLocation,
     ChatMember,
     ChatMemberAdministrator,
     ChatMemberBanned,
@@ -2453,22 +4754,67 @@ export {
     ChatMemberMember,
     ChatMemberOwner,
     ChatMemberRestricted,
-    ChatInviteLink,
     ChatMemberUpdated,
-    ChatFullInfo,
-    ChatLocation,
     ChatPermissions,
     ChatPhoto,
-    BusinessIntro,
-    BusinessLocation,
-    BusinessOpeningHours,
-    BusinessOpeningHoursInterval,
-    Birthdate,
+    Checklist,
+    ChecklistTask,
+    ChecklistTasksAdded,
+    ChecklistTasksDone,
+    Dice,
+    Document,
+    ExternalReplyInfo,
+    Game,
+    Giveaway,
+    GiveawayWinners,
+    InaccessibleMessage,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    InputChecklist,
+    InputChecklistTask,
+    InputFile,
+    InputMediaAnimation,
+    InputMediaAudio,
+    InputMediaDocument,
+    InputMediaPhoto,
+    InputMediaVideo,
+    Invoice,
+    LinkPreviewOptions,
     Location,
+    MaybeInaccessibleMessage,
+    Message,
+    MessageEntity,
+    MessageId,
+    MessageOrigin,
+    MessageOriginChannel,
+    MessageOriginChat,
+    MessageOriginHiddenUser,
+    MessageOriginUser,
+    PaidMedia,
+    PaidMediaInfo,
+    PaidMediaPhoto,
+    PaidMediaPreview,
+    PaidMediaVideo,
+    PhotoSize,
+    Poll,
+    PollOption,
     ReactionType,
     ReactionTypeCustomEmoji,
     ReactionTypeEmoji,
     ReactionTypePaid,
+    ReplyParameters,
+    Sticker,
+    Story,
+    TextQuote,
+    UniqueGiftColors,
+    User,
+    UserProfilePhotos,
+    UserRating,
+    Venue,
+    Video,
+    VideoQuality,
+    VideoNote,
+    Voice,
     WebAppInfo,
-    MessageId
+    WebhookInfo
 }

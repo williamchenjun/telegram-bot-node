@@ -8,15 +8,15 @@ function filterObject(obj){
 }
 
 /**
- * 
+ * To use accessControl, you need to set the environment variables `ADMINS` and `SECONDARY_ADMINS`. ADMINS are the owner and anyone who has the same level of authority as the owner. Secondary admins are moderators and such users.
  * @param {Permissions} requiredPermissions 
  * @returns 
  */
 function accessControl(requiredPermissions = 0) {
     return (handler) => async (update, context) => {
         const userId = update.effective_user?.id;
-        const admins = process.env.TEST_ADMINS.split(",").map(Number);
-        const secadmins = process.env.TEST_SECONDARY_ADMINS.split(",").map(Number);
+        const admins = process.env.ADMINS.split(",").map(Number);
+        const secadmins = process.env.SECONDARY_ADMINS.split(",").map(Number);
         
         let userPermissions = 0;
 

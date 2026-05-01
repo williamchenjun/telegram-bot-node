@@ -1,4 +1,4 @@
-import { CallbackQuery, Chat, LinkPreviewOptions, Message, WebhookInfo, _File, User, ChatMember, ChatMemberAdministrator, ChatMemberBanned, ChatMemberMember, ChatMemberLeft, ChatMemberRestricted, ChatMemberOwner, InputFile, ChatMemberUpdated, Document, ChatFullInfo, ChatPermissions, MessageId, UserProfilePhotos} from "./components.js";
+import { CallbackQuery, Chat, LinkPreviewOptions, Message, WebhookInfo, _File, User, ChatMember, ChatMemberAdministrator, ChatMemberBanned, ChatMemberMember, ChatMemberLeft, ChatMemberRestricted, ChatMemberOwner, InputFile, ChatMemberUpdated, Document, ChatFullInfo, ChatPermissions, MessageId, UserProfilePhotos, ChatInviteLink} from "./components.js";
 import { BaseHandler, ConversationHandler } from "./handlers.js";
 import fs from "fs";
 import { FormData } from "node-fetch";
@@ -791,6 +791,39 @@ class Bot {
     }
 
     /**
+     * Use this method to remove a message from the list of pinned messages in a chat. In private chats and channel direct messages chats, all messages can be unpinned. Conversely, the bot must be an administrator with the 'can_pin_messages' right or the 'can_edit_messages' right to unpin messages in groups and channels respectively. Returns True on success.
+     * @param {{business_connection_id: string, chat_id: string|number, message_id: number}} config 
+     * @returns {Promise<boolean>}
+     */
+    async unpinChatMessage(config){
+        let params = App.HTTP({method: "unpinChatMessage", params: config});
+        const response = await fetch(this.endpoint, params);
+        if (!response.ok){
+            console.error(`Failed to unpin message:`, await response.text());
+            return false;
+        }
+        const message = await response.json();
+        return message.result;
+    }
+
+    
+    /**
+     * Use this method to clear the list of pinned messages in a chat. In private chats and channel direct messages chats, no additional rights are required to unpin all pinned messages. Conversely, the bot must be an administrator with the 'can_pin_messages' right or the 'can_edit_messages' right to unpin all pinned messages in groups and channels respectively. Returns True on success.
+     * @param {{chat_id: string|number}} config 
+     * @returns {Promise<boolean>}
+     */
+    async unpinAllChatMessages(config){
+        let params = App.HTTP({method: "unpinAllChatMessages", params: config});
+        const response = await fetch(this.endpoint, params);
+        if (!response.ok){
+            console.error(`Failed to unpin all messages:`, await response.text());
+            return false;
+        }
+        const message = await response.json();
+        return message.result;
+    }
+
+    /**
      * Use this method to edit animation, audio, document, photo, or video messages. If a message is part of a message album, then it can be edited only to an audio for audio albums, only to a document for document albums and to a photo or a video otherwise. When an inline message is edited, a new file can't be uploaded; use a previously uploaded file via its `file_id` or specify a URL. On success, if the edited message is not an inline message, the edited `Message` is returned, otherwise `True` is returned. Note that business messages that were not sent by the bot and do not contain an inline keyboard can only be edited within 48 hours from the time they were sent.
      * @param {{chat_id: string|number, message_id: number, inline_message_id: string, media: InputMediaAnimation|InputMediaAudio|InputMediaDocument|InputMediaPhoto|InputMediaVideo, reply_markup: InlineKeyboardMarkup}} config 
      * @returns {Promise<Message>|Promise<boolean>}
@@ -927,6 +960,50 @@ class Bot {
     } 
 
     /**
+     * Use this method to get a list of administrators in a chat, which aren't bots. Returns an Array of ChatMember objects.
+     * @param {string|number} chat_id Unique identifier for the target chat or username of the target supergroup or channel (in the format `@channelusername`).
+     * @returns {Promise<ChatMember[]>|Promise<null>}
+     */
+    async getChatAdministrators(chat_id) {
+        const response = await fetch(this.endpoint + "getChatAdministrators", {
+            method: "POST",
+            body: JSON.stringify({
+                chat_id: chat_id
+            })
+        });
+        
+        if (!response.ok){
+            console.error("Error:", await response.text());
+            return null;
+        }
+        const resp = await response.json();
+
+        return resp.result.map(member => new ChatMember(member));
+    }
+
+    /**
+     * Use this method to get the number of members in a chat. Returns Int on success.
+     * @param {string|number} chat_id Unique identifier for the target chat or username of the target supergroup or channel (in the format `@channelusername`).
+     * @returns {Promise<number>|Promise<null>}
+     */
+    async getChatMemberCount(chat_id) {
+        const response = await fetch(this.endpoint + "getChatMemberCount", {
+            method: "POST",
+            body: JSON.stringify({
+                chat_id: chat_id
+            })
+        });
+        
+        if (!response.ok){
+            console.error("Error:", await response.text());
+            return null;
+        }
+        const resp = await response.json();
+
+        return resp.result;
+    }
+
+    /**
      * Use this method to restrict a user in a supergroup. The bot must be an administrator in the supergroup for this to work and must have the appropriate administrator rights. Pass True for all permissions to lift restrictions from a user. Returns True on success.
      * @param {{chat_id: number|string, user_id: number, permissions: ChatPermissions, use_independent_chat_permissions: boolean, until_date: number}} config 
      */
@@ -988,7 +1065,7 @@ class Bot {
     /**
      * Use this method to get a list of profile pictures for a user. Returns a `UserProfilePhotos` object.
      * @param {{user_id: number, limit: number, offset: number}} config 
-     * @returns 
+     * @returns {Promise<UserProfilePhotos>}
      */
     async getUserProfilePhotos(config){
         let params = App.HTTP({method: "getUserProfilePhotos", params: config});
@@ -1001,6 +1078,138 @@ class Bot {
 
         const result = await response.json();
         return new UserProfilePhotos(result.result);
+    }
+
+    /**
+     * Use this method to generate a new primary invite link for a chat; any previously generated primary link is revoked. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. Returns the new invite link as String on success.
+     * @param {{chat_id: number|string}} config 
+     * @returns {Promise<string>}
+     */
+    async exportChatInviteLink(config) {
+        let params = App.HTTP({method: "exportChatInviteLink", params: config});
+        const response = await fetch(this.endpoint, params);
+        
+        if (!response.ok){
+            console.error("Error:", await response.text());
+            return null;
+        }
+
+        const result = await response.json();
+        return result.result;
+    }
+
+    /**
+     * Use this method to create an additional invite link for a chat. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. The link can be revoked using the method revokeChatInviteLink. Returns the new invite link as ChatInviteLink object.
+     * @param {{chat_id: number|string, name?: string, expire_date?: number, member_limit?: number, creates_join_request?: boolean}} config 
+     * @returns {Promise<ChatInviteLink>}
+     */
+    async createChatInviteLink(config) {
+        let params = App.HTTP({method: "createChatInviteLink", params: config});
+        const response = await fetch(this.endpoint, params);
+        
+        if (!response.ok){
+            console.error("Error:", await response.text());
+            return null;
+        }
+
+        const result = await response.json();
+        return new ChatInviteLink(result.result);
+    }
+
+    /**
+     * Use this method to revoke an invite link created by the bot. If the primary link is revoked, a new link is automatically generated. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. Returns the revoked invite link as ChatInviteLink object.
+     * @param {{chat_id: number|string, invite_link: string}} config 
+     * @returns {Promise<ChatInviteLink>}
+     */
+    async revokeChatInviteLink(config) {
+        let params = App.HTTP({method: "revokeChatInviteLink", params: config});
+        const response = await fetch(this.endpoint, params);
+        
+        if (!response.ok){
+            console.error("Error:", await response.text());
+            return null;
+        }
+
+        const result = await response.json();
+        return new ChatInviteLink(result.result);
+    }
+
+    /**
+     * Use this method to edit a non-primary invite link created by the bot. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. Returns the edited invite link as a ChatInviteLink object.
+     * @param {{chat_id: number|string, invite_link: string, name?: string, expire_date?: number, member_limit?: number, creates_join_request?: boolean}} config 
+     * @returns {Promise<ChatInviteLink>}
+     */
+    async editChatInviteLink(config) {
+        let params = App.HTTP({method: "editChatInviteLink", params: config});
+        const response = await fetch(this.endpoint, params);
+        
+        if (!response.ok){
+            console.error("Error:", await response.text());
+            return null;
+        }
+
+        const result = await response.json();
+        return new ChatInviteLink(result.result);
+    }
+
+    /**
+     * Use this method to approve a chat join request. The bot must be an administrator in the chat for this to work and must have the can_invite_users administrator right. Returns True on success.
+     * @param {{chat_id: number|string, user_id: number}} config 
+     * @returns {Promise<boolean>}
+     */
+    async approveChatJoinRequest(config) {
+        let params = App.HTTP({method: "approveChatJoinRequest", params: config});
+        const response = await fetch(this.endpoint, params);
+        
+        if (!response.ok){
+            console.error("Error:", await response.text());
+            return false;
+        }
+
+        const result = await response.json();
+        return result.result;
+    }
+
+    /**
+     * Use this method to decline a chat join request. The bot must be an administrator in the chat for this to work and must have the can_invite_users administrator right. Returns True on success.
+     * @param {{chat_id: number|string, user_id: number}} config 
+     * @returns {Promise<boolean>}
+     */
+    async declineChatJoinRequest(config) {
+        let params = App.HTTP({method: "declineChatJoinRequest", params: config});
+        const response = await fetch(this.endpoint, params);
+        
+        if (!response.ok){
+            console.error("Error:", await response.text());
+            return false;
+        }
+
+        const result = await response.json();
+        return result.result;
+    }
+
+    /**
+     * Use this method to set a tag for a regular member in a group or a supergroup. The bot must be an administrator in the chat for this to work and must have the can_manage_tags administrator right. Returns True on success.
+     * @param {{chat_id: number|string, user_id: number, tag: string}} config 
+     * @returns {Promise<boolean>}
+     */
+    async setChatMemberTag(config) {
+
+        if (config.tag.length > 16) {
+            console.error("Error: Maximum tag length is 16 characters. No emojis.");
+            return false;
+        }
+
+        let params = App.HTTP({method: "setChatMemberTag", params: config});
+        const response = await fetch(this.endpoint, params);
+        
+        if (!response.ok){
+            console.error("Error:", await response.text());
+            return false;
+        }
+
+        const result = await response.json();
+        return result.result;
     }
 
 }
