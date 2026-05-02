@@ -886,7 +886,7 @@ class Chat {
      * 
      * Shortcut of `bot.getChat()`.
      * 
-     * @returns {Promise<ChatMember>}
+     * @returns {Promise<ChatMember[]>}
      */ 
     async getChatAdministrators(){
         return await Context.bot.getChatAdministrators({chat_id: this.id});
