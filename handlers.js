@@ -1,6 +1,6 @@
 import {Update, Context} from "./base.js";
 import { Filters } from "./constants.js";
-import { parseCommand } from "./utils.js";
+import { getMessage, parseCommand } from "./utils.js";
 
 class BaseHandler {
     /**
@@ -33,7 +33,14 @@ class CommandHandler extends BaseHandler {
      * @param {(update: Update, context: Context) => Promise<void>} callback
      */
     constructor (command, callback){
-        super((update) => update.type === "message" && update?.message?.text && update.message.text.startsWith(`/${command}`), callback);
+        super((update) => {
+            const message = getMessage(update);
+            return (
+                message && 
+                typeof message.text === "string" && 
+                message.text.startsWith(`/${command}`)
+            )
+        }, callback);
     }
 
     /**
@@ -43,7 +50,8 @@ class CommandHandler extends BaseHandler {
      */
     async handle(update, context) {
         if (await this.canHandle(update)) {
-            const args = parseCommand(update.message.text);
+            const message = getMessage(update);
+            const args = parseCommand(message.text);
             context.args = args;
             
             return await this.callback(update, context);
@@ -62,43 +70,45 @@ class MessageHandler extends BaseHandler {
      */
     constructor (filter, callback){
         super((/**@type {Update}*/update) => {
+            const message = getMessage(update);
+
             if (update.type !== "message") return false;
             if (typeof filter === "function") return filter(update);
 
             let flags = 0;
 
-            if (update.message.text){
+            if (message.text){
                 flags |= Filters.TEXT;
-                if (update.message.text.startsWith("/")){
+                if (message.text.startsWith("/")){
                     flags |= Filters.COMMAND;
                 }
             }
 
-            if (update.message.photo){
+            if (message.photo){
                 flags |= Filters.PHOTO;
             }
 
-            if (update.message.video){
+            if (message.video){
                 flags |= Filters.VIDEO;
             }
 
-            if (update.message.document){
+            if (message.document){
                 flags |= Filters.DOCUMENT;
             }
 
-            if (update.message.media_group_id){
+            if (message.media_group_id){
                 flags |= Filters.MEDIA_GROUP;
             }
 
-            if (update.message.forward_from_chat || update.message.forward_origin){
+            if (message.forward_from_chat || message.forward_origin){
                 flags |= Filters.FORWARDED;
             }
 
-            if (update.message.new_chat_members?.length) {
+            if (message.new_chat_members?.length) {
                 flags |= Filters.NEW_CHAT_MEMBERS;
             }
 
-            if (update.message.left_chat_member) {
+            if (message.left_chat_member) {
                 flags |= Filters.LEFT_CHAT_MEMBER;
             }
 

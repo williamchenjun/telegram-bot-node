@@ -8,6 +8,10 @@ function filterObject(obj){
     );
 }
 
+function getMessage(update) {
+    return update.message || update.channel_post || null
+}
+
 /**
  * To use accessControl, you need to set the environment variables `ADMINS` and `SECONDARY_ADMINS`. ADMINS are the owner and anyone who has the same level of authority as the owner. Secondary admins are moderators and such users.
  * @param {Permissions} requiredPermissions 
@@ -76,5 +80,6 @@ export {
     filterObject,
     accessControl,
     denyAccess,
-    parseCommand
+    parseCommand,
+    getMessage
 }
