@@ -770,7 +770,7 @@ class Chat {
      * @returns {Promise<Message>}
      */
     async sendMessage(config){
-        return await Context.bot.sendMessage({chat_id: this.type === "channel" ? this.username : this.id, ...config});
+        return await Context.bot.sendMessage({chat_id: this.id, ...config});
     }
     
     /**
