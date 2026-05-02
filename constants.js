@@ -172,9 +172,17 @@ class Filters {
      */
     static FORWARDED = 1 << 6;
     /**
+     * @param {number} NEW_CHAT_MEMBERS - Represents new chat members.
+     */
+    static NEW_CHAT_MEMBERS = 1 << 7;
+    /**
+     * @param {number} LEFT_CHAT_MEMBER - Represents a chat member that left.
+     */
+    static LEFT_CHAT_MEMBER = 1 << 8;
+    /**
      * @param {number} ALL - Represent any kind of message.
      */
-    static ALL = Filters.TEXT | Filters.PHOTO | Filters.VIDEO | Filters.DOCUMENT | Filters.COMMAND | Filters.MEDIA_GROUP | Filters.FORWARDED;
+    static ALL = Filters.TEXT | Filters.PHOTO | Filters.VIDEO | Filters.DOCUMENT | Filters.COMMAND | Filters.MEDIA_GROUP | Filters.FORWARDED | Filters.NEW_CHAT_MEMBERS | Filters.LEFT_CHAT_MEMBER;
 
     /**
      * Regex pattern.

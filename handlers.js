@@ -94,6 +94,14 @@ class MessageHandler extends BaseHandler {
                 flags |= Filters.FORWARDED;
             }
 
+            if (update.message.new_chat_members?.length) {
+                flags |= Filters.NEW_CHAT_MEMBERS;
+            }
+
+            if (update.message.left_chat_member) {
+                flags |= Filters.LEFT_CHAT_MEMBER;
+            }
+
             return (filter & flags) !== 0;
         }, callback);
     }
