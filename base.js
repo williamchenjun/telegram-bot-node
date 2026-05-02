@@ -154,6 +154,9 @@ class Update {
             return message.chat;
         } else if (this.update?.chat_member){
             return new Chat(this.update.chat_member.chat);
+        } else if (this.update?.channel_post){
+            let message = new Message(this.update.channel_post);
+            return message.chat;
         }
     }
     /**
@@ -181,6 +184,9 @@ class Update {
             return message;
         } else if (this.update.hasOwnProperty("callback_query")){
             let message = new Message(this.update.callback_query.message);
+            return message;
+        } else if (this.update?.channel_post){
+            let message = new Message(this.update.channel_post);
             return message;
         }
     }
