@@ -195,9 +195,9 @@ class Update {
 
     /**
      * Optional. A chat member's status was updated in a chat. The bot must be an administrator in the chat and must explicitly specify "chat_member" in the list of allowed_updates to receive these updates.
-     * @returns {ChatMemberAdministrator|ChatMemberOwner|ChatMemberMember|ChatMemberBanned|ChatMemberLeft|ChatMemberRestricted}
+     * @returns {ChatMemberUpdated}
      */
-    get chat_member(){return this.update?.chat_member ? new ChatMember(this.update.chat_member) : null}
+    get chat_member(){return this.update?.chat_member ? new ChatMemberUpdated(this.update.chat_member) : null}
 
     // set chat_member(value){
     //     this.#chat_member = value;
