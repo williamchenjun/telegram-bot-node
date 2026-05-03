@@ -218,29 +218,38 @@ class CallbackQueryHandler extends BaseHandler {
     }
 }
 
-/**
- * Handle `message` updates that contain `chat_member` information.
- */
-class ChatMemberHandler extends BaseHandler {
-    constructor(callback) {
-        super((update) => update.type === "message" && update.effective_chat && update.effective_user, async (update, context) => {
-            update.chat_member = await Context.bot.getChatMember({chat_id: update.effective_chat.id, user_id: update.effective_user.id});
-            return callback(update, context);
-        });
-    }
-}
+// /**
+//  * Handle `chat_member` updates.
+//  */
+// class ChatMemberHandler extends BaseHandler {
+//     /**
+//      * @param {(update: Update, context: Context) => Promise<void>} callback
+//      */
+//     constructor(callback) {
+//         super((update) => update.type === "chat_member" && update.effective_chat && update.effective_user, callback);
+//     }
+// }
 
 /**
- * Handle `chat_member` updates.
+ * Handle `chat_member` and `my_chat_member` updates.
  */
-class ChatMemberUpdatedHandler extends BaseHandler {
+class ChatMemberHandler extends BaseHandler {
     /**
-     * 
      * @param {(update: Update, context: Context) => Promise<void>} callback
      */
     constructor(callback){
         super((update) => {
-            return (update.type === "chat_member" || update.type === "my_chat_member") && update.chat_member && (update.chat_member?.old_chat_member || update.chat_member?.new_chat_member);
+            if (update.type === "chat_member") {
+                return (
+                    update.chat_member && 
+                    (update.chat_member?.old_chat_member || update.chat_member?.new_chat_member)
+                )
+            } else if (update.type === "my_chat_member") {
+                return (
+                    update.my_chat_member &&
+                    (update.my_chat_member?.old_chat_member || update.my_chat_member?.new_chat_member)
+                )
+            }
         }, callback);
     }
 }
@@ -251,6 +260,6 @@ CommandHandler,
 ConversationHandler,
 CallbackQueryHandler,
 BaseHandler,
-ChatMemberHandler,
-ChatMemberUpdatedHandler
+// ChatMemberHandler,
+ChatMemberHandler
 }

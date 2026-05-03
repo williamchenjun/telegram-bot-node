@@ -1,4 +1,4 @@
-import { CallbackQuery, Chat, LinkPreviewOptions, Message, WebhookInfo, _File, User, ChatMember, ChatMemberAdministrator, ChatMemberBanned, ChatMemberMember, ChatMemberLeft, ChatMemberRestricted, ChatMemberOwner, InputFile, ChatMemberUpdated, Document, ChatFullInfo, ChatPermissions, MessageId, UserProfilePhotos, ChatInviteLink} from "./components.js";
+import { CallbackQuery, Chat, LinkPreviewOptions, Message, WebhookInfo, _File, User, ChatMember, ChatMemberAdministrator, ChatMemberBanned, ChatMemberMember, ChatMemberLeft, ChatMemberRestricted, ChatMemberOwner, InputFile, ChatMemberUpdated, Document, ChatFullInfo, ChatPermissions, MessageId, UserProfilePhotos, ChatInviteLink, ChatJoinRequest} from "./components.js";
 import { BaseHandler, ConversationHandler } from "./handlers.js";
 import fs from "fs";
 import { FormData } from "node-fetch";
@@ -97,8 +97,8 @@ class Context{
  * Represents the update object.
  */
 class Update {
-    /**@type {ChatMember} */
-    #chat_member = null;
+    // /**@type {ChatMember} */
+    // #chat_member = null;
 
     constructor(update){
         this.update = update;
@@ -154,7 +154,9 @@ class Update {
             return message.chat;
         } else if (this.update?.chat_member){
             return new Chat(this.update.chat_member.chat);
-        } else if (this.update?.channel_post){
+        } else if (this.update?.my_chat_member){
+            return new Chat(this.update.my_chat_member.chat);
+        }  else if (this.update?.channel_post){
             let message = new Message(this.update.channel_post);
             return message.chat;
         }
@@ -192,45 +194,29 @@ class Update {
     }
 
     /**
-     * @returns {ChatMemberAdministrator|ChatMemberOwner|ChatMemberMember|ChatMemberBanned|ChatMemberLeft|ChatMemberRestricted|ChatMemberUpdated}
+     * Optional. A chat member's status was updated in a chat. The bot must be an administrator in the chat and must explicitly specify "chat_member" in the list of allowed_updates to receive these updates.
+     * @returns {ChatMemberAdministrator|ChatMemberOwner|ChatMemberMember|ChatMemberBanned|ChatMemberLeft|ChatMemberRestricted}
      */
-    get chat_member(){
-        let update;
+    get chat_member(){return this.update?.chat_member ? new ChatMember(this.update.chat_member) : null}
 
-        if (this.#chat_member){
-            update = {
-                ...this.update,
-                chat_member: Object.values(this.#chat_member)[0]
-            }
-        }
-        
-        if (update && update?.chat_member){
-            this.#chat_member = update.chat_member;
-            return new ChatMember(update.chat_member);
-        } else if (this.update?.chat_member) {
-            return new ChatMemberUpdated(this.update.chat_member);
-        }
-        return null;
-    }
+    // set chat_member(value){
+    //     this.#chat_member = value;
+    // }
 
-    set chat_member(value){
-        this.#chat_member = value;
-    }
+    /**
+     * Optional. The bot's chat member status was updated in a chat. For private chats, this update is received only when the bot is blocked or unblocked by the user.
+     * @returns {ChatMemberUpdated}
+     */
+    get my_chat_member(){return this.update?.my_chat_member ? new ChatMemberUpdated(this.update.my_chat_member) : null}
+    
+    /**
+     * Optional. A request to join the chat has been sent. The bot must have the can_invite_users administrator right in the chat to receive these updates.
+     * @returns {ChatJoinRequest}
+     */
+    get chat_join_request(){return this.update?.chat_join_request ? new ChatJoinRequest(this.update.chat_join_request) : null}
 
     toJSON() {
-        let update;
-
-        if (this.#chat_member){
-            update = {
-                ...this.update,
-                type: this.type,
-                chat_member: Object.values(this.#chat_member)[0]
-            }
-
-            return update;
-        }
-
-        return this.update;
+        return {...this};
     }
     
 }

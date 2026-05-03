@@ -988,6 +988,67 @@ class Chat {
 }
 
 /**
+ * Represents a join request sent to a chat.
+ */
+class ChatJoinRequest {
+    constructor(chat_join_request) {
+        this.chat_join_request = chat_join_request;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Chat to which the request was sent.
+     * @returns {Chat}
+     */
+    get chat(){
+        return this.chat_join_request?.chat
+            ? new Chat(this.chat_join_request.chat)
+            : null;
+    }
+
+    /**
+     * User that sent the join request.
+     * @returns {User}
+     */
+    get from(){
+        return this.chat_join_request?.from
+            ? new User(this.chat_join_request.from)
+            : null;
+    }
+
+    /**
+     * Identifier of a private chat with the user who sent the join request. This number may have more than 32 significant bits and some programming languages may have difficulty/silent defects in interpreting it. But it has at most 52 significant bits, so a 64-bit integer or double-precision float type are safe for storing this identifier. The bot can use this identifier for 5 minutes to send messages until the join request is processed, assuming no other administrator contacted the user.
+     * @returns {number}
+     */
+    get user_chat_id(){return this.chat_join_request?.user_chat_id};
+
+    /**
+     * Date the request was sent in Unix time.
+     * @returns {number}
+     */
+    get date(){return this.chat_join_request?.date};
+
+    /**
+     * Optional. Bio of the user.
+     * @returns {string}
+     */
+    get bio(){return this.chat_join_request?.bio};
+
+    /**
+     * Optional. Chat invite link that was used by the user to send the join request.
+     * @returns {ChatInviteLink}
+     */
+    get invite_link(){
+        return this.chat_join_request?.invite_link
+            ? new ChatInviteLink(this.chat_join_request.invite_link)
+            : null;
+    }
+}
+
+/**
  * This object represents a chat photo.
  */
 class ChatPhoto {
@@ -4777,6 +4838,7 @@ export {
     Chat,
     ChatFullInfo,
     ChatInviteLink,
+    ChatJoinRequest,
     ChatLocation,
     ChatMember,
     ChatMemberAdministrator,
