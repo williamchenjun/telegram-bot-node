@@ -1391,6 +1391,16 @@ class ChatPermissions {
      * @returns {boolean}
      */
     get can_manage_topics(){return this.chat_permissions?.can_manage_topics;}
+    /**
+     * Optional. True, if the user is allowed to edit their own tag. If omitted, defaults to the value of can_pin_messages.
+     * @returns {boolean}
+     */
+    get can_edit_tag(){return this.chat_permissions?.can_edit_tag;}
+    /**
+     * Optional. True, if the user is allowed to react to messages. If omitted, defaults to the value of can_send_messages.
+     * @returns {boolean}
+     */
+    get can_react_to_messages(){return this.chat_permissions?.can_react_to_messages;}
     toJSON(){
         return this.chat_permissions;
     }
