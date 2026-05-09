@@ -2,6 +2,701 @@ import {filterObject} from "./utils.js";
 import { Context } from "./base.js";
 
 /**
+ * Describes a service message about the chat owner leaving the chat.
+ */
+class ChatOwnerLeft {
+    constructor(chat_owner_left) {
+        this.chat_owner_left = chat_owner_left;
+    }
+
+    /**
+     * @returns {User} Optional. The user who will become the new owner of the chat if the previous owner does not return to the chat.
+     */
+    get new_owner(){return this.chat_owner_left?.new_owner ? new User(this.chat_owner_left.new_owner) : null}
+}
+
+/**
+ * Describes a service message about an ownership change in the chat.
+ */
+class ChatOwnerChanged {
+    constructor(chat_owner_changed) {
+        this.chat_owner_changed = chat_owner_changed;
+    }
+
+    /**
+     * @returns {User} The new owner of the chat.
+     */
+    get new_owner(){return this.chat_owner_changed?.new_owner ? new User(this.chat_owner_changed.new_owner) : null}
+}
+
+/**
+ * This object represents a service message about a change in auto-delete timer settings.
+ */
+class MessageAutoDeleteTimerChanged {
+    constructor(message_auto_delete_timer_changed) {
+        this.message_auto_delete_timer_changed = message_auto_delete_timer_changed;
+    }
+    /**
+     * New auto-delete time for messages in the chat; in seconds
+     * @returns {number}
+     */
+    get message_auto_delete_time(){return this.message_auto_delete_timer_changed?.message_auto_delete_time ? this.message_auto_delete_timer_changed.message_auto_delete_time : null}
+}
+
+/**
+ * This object contains information about a user that was shared with the bot using a KeyboardButtonRequestUsers button.
+ */
+class SharedUser {
+    constructor(shared_user){
+        this.shared_user = shared_user;
+    }
+
+    /**
+     * Identifier of the shared user. This number may have more than 32 significant bits and some programming languages may have difficulty/silent defects in interpreting it. But it has at most 52 significant bits, so 64-bit integers or double-precision float types are safe for storing these identifiers. The bot may not have access to the user and could be unable to use this identifier, unless the user is already known to the bot by some other means.
+     * @returns {number}
+     */
+    get user_id(){return this.shared_user.user_id}
+    /**
+     * Optional. First name of the user, if the name was requested by the bot.
+     * @returns {string}
+     */
+    get first_name(){return this.shared_user?.first_name ? this.shared_user.first_name : null}
+    /**
+     * Optional. Last name of the user, if the name was requested by the bot.
+     * @returns {string}
+     */
+    get last_name(){return this.shared_user?.last_name ? this.shared_user.last_name : null}
+    /**
+     * Optional. Username of the user, if the username was requested by the bot.
+     * @returns {string}
+     */
+    get username(){return this.shared_user?.username ? this.shared_user.username : null}
+    /**
+     * Optional. Available sizes of the chat photo, if the photo was requested by the bot.
+     * @returns {PhotoSize[]}
+     */
+    get photo(){return this.shared_user?.photo ? this.shared_user.photo.map(p => new PhotoSize(p)) : null}
+}
+
+/**
+ * This object contains information about the users whose identifiers were shared with the bot using a KeyboardButtonRequestUsers button.
+ */
+class UsersShared {
+    constructor(users_shared) {
+        this.users_shared = users_shared;
+    }
+
+    /**
+     * Identifier of the request.
+     * @returns {number}
+     */
+    get request_id(){return this.users_shared?.request_id ? this.users_shared.request_id : null}
+    /**
+     * Information about users shared with the bot.
+     * @returns {SharedUser[]}
+     */
+    get users(){return this.users_shared?.users ? this.users_shared.users.map(user => new SharedUser(user)) : null}
+
+}
+
+/**
+ * This object contains information about a chat that was shared with the bot using a KeyboardButtonRequestChat button.
+ */
+class ChatShared {
+    constructor(chat_shared) {
+        this.chat_shared = chat_shared;
+    }
+
+    /**
+     * Identifier of the request.
+     * @returns {number}
+     */
+    get request_id(){return this.chat_shared?.request_id ? this.chat_shared.request_id : null}
+    /**
+     * Identifier of the shared chat. This number may have more than 32 significant bits and some programming languages may have difficulty/silent defects in interpreting it. But it has at most 52 significant bits, so a 64-bit integer or double-precision float type are safe for storing this identifier. The bot may not have access to the chat and could be unable to use this identifier, unless the chat is already known to the bot by some other means.
+     * @returns {number}
+     */
+    get chat_id(){return this.chat_shared.chat_id}
+    /**
+     * Optional. Title of the chat, if the title was requested by the bot..
+     * @returns {string}
+     */
+    get title(){return this.chat_shared?.title ? this.chat_shared.title : null}
+    /**
+     * Optional. Username of the chat, if the username was requested by the bot and available.
+     * @returns {string}
+     */
+    get username(){return this.chat_shared?.username ? this.chat_shared.username : null}
+    /**
+     * Optional. Available sizes of the chat photo, if the photo was requested by the bot.
+     * @returns {PhotoSize[]}
+     */
+    get photo(){return this.chat_shared?.photo ? this.chat_shared.photo.map(p => new PhotoSize(p)) : null}
+}
+
+/**
+ * This object represents a service message about a user boosting a chat.
+ */
+class ChatBoostAdded {
+    constructor(chat_boost_added) {
+        this.chat_boost_added = chat_boost_added;
+    }
+
+    /**
+     * Number of boosts added by the user.
+     * @returns {number}
+     */
+    get boost_count(){return this.chat_boost_added.boost_count}
+
+}
+
+class BackgroundType {
+    /** Automatically filled background. */
+    static FILL = "fill";
+
+    /** JPEG wallpaper background. */
+    static WALLPAPER = "wallpaper";
+
+    /** Pattern background. */
+    static PATTERN = "pattern";
+
+    /** Built-in Telegram chat theme background. */
+    static CHAT_THEME = "chat_theme";
+
+    constructor(data) {
+
+        const typeToClassMap = {
+            "fill": BackgroundTypeFill,
+            "wallpaper": BackgroundTypeWallpaper,
+            "pattern": BackgroundTypePattern,
+            "chat_theme": BackgroundTypeChatTheme
+        };
+
+        const TargetClass = typeToClassMap[data.type] || BackgroundType;
+
+        if (!TargetClass) {
+            throw new Error("Background type not recognized.");
+        }
+
+        const instance = new TargetClass(data);
+
+        Object.setPrototypeOf(this, TargetClass.prototype);
+
+        Object.assign(this, instance);
+
+        return this;
+    }
+}
+
+/**
+ * The background is automatically filled based on selected colors.
+ */
+class BackgroundTypeFill {
+    constructor(background_type_fill) {
+        this.background_type_fill = background_type_fill;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Type of the background, always "fill".
+     * @returns {string}
+     */
+    get type() { return "fill"; }
+
+    /**
+     * The background fill.
+     * @returns {BackgroundFill}
+     */
+    get fill() {
+        return this.background_type_fill.hasOwnProperty("fill")
+            ? new BackgroundFill(this.background_type_fill.fill)
+            : null;
+    }
+
+    /**
+     * Dimming of the background in dark themes.
+     * @returns {number}
+     */
+    get dark_theme_dimming() {
+        return this.background_type_fill.hasOwnProperty("dark_theme_dimming")
+            ? this.background_type_fill.dark_theme_dimming
+            : null;
+    }
+}
+
+/**
+ * The background is a wallpaper.
+ */
+class BackgroundTypeWallpaper {
+    constructor(background_type_wallpaper) {
+        this.background_type_wallpaper = background_type_wallpaper;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Type of the background, always "wallpaper".
+     * @returns {string}
+     */
+    get type() { return "wallpaper"; }
+
+    /**
+     * Wallpaper document.
+     * @returns {Document}
+     */
+    get document() {
+        return this.background_type_wallpaper.hasOwnProperty("document")
+            ? new Document(this.background_type_wallpaper.document)
+            : null;
+    }
+
+    /**
+     * Dimming of the background in dark themes.
+     * @returns {number}
+     */
+    get dark_theme_dimming() {
+        return this.background_type_wallpaper.hasOwnProperty("dark_theme_dimming")
+            ? this.background_type_wallpaper.dark_theme_dimming
+            : null;
+    }
+
+    /**
+     * True if wallpaper is blurred.
+     * @returns {boolean}
+     */
+    get is_blurred() {
+        return this.background_type_wallpaper.hasOwnProperty("is_blurred")
+            ? this.background_type_wallpaper.is_blurred
+            : null;
+    }
+
+    /**
+     * True if wallpaper moves when device is tilted.
+     * @returns {boolean}
+     */
+    get is_moving() {
+        return this.background_type_wallpaper.hasOwnProperty("is_moving")
+            ? this.background_type_wallpaper.is_moving
+            : null;
+    }
+}
+
+/**
+ * The background is a pattern.
+ */
+class BackgroundTypePattern {
+    constructor(background_type_pattern) {
+        this.background_type_pattern = background_type_pattern;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Type of the background, always "pattern".
+     * @returns {string}
+     */
+    get type() { return "pattern"; }
+
+    /**
+     * Pattern document.
+     * @returns {Document}
+     */
+    get document() {
+        return this.background_type_pattern.hasOwnProperty("document")
+            ? new Document(this.background_type_pattern.document)
+            : null;
+    }
+
+    /**
+     * The background fill.
+     * @returns {BackgroundFill}
+     */
+    get fill() {
+        return this.background_type_pattern.hasOwnProperty("fill")
+            ? new BackgroundFill(this.background_type_pattern.fill)
+            : null;
+    }
+
+    /**
+     * Intensity of the pattern.
+     * @returns {number}
+     */
+    get intensity() {
+        return this.background_type_pattern.hasOwnProperty("intensity")
+            ? this.background_type_pattern.intensity
+            : null;
+    }
+
+    /**
+     * True if pattern colors are inverted.
+     * @returns {boolean}
+     */
+    get is_inverted() {
+        return this.background_type_pattern.hasOwnProperty("is_inverted")
+            ? this.background_type_pattern.is_inverted
+            : null;
+    }
+
+    /**
+     * True if pattern moves when device is tilted.
+     * @returns {boolean}
+     */
+    get is_moving() {
+        return this.background_type_pattern.hasOwnProperty("is_moving")
+            ? this.background_type_pattern.is_moving
+            : null;
+    }
+}
+
+/**
+ * The background is a built-in Telegram chat theme.
+ */
+class BackgroundTypeChatTheme {
+    constructor(background_type_chat_theme) {
+        this.background_type_chat_theme = background_type_chat_theme;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Type of the background, always "chat_theme".
+     * @returns {string}
+     */
+    get type() { return "chat_theme"; }
+
+    /**
+     * Name of the theme.
+     * @returns {string}
+     */
+    get theme_name() {
+        return this.background_type_chat_theme.hasOwnProperty("theme_name")
+            ? this.background_type_chat_theme.theme_name
+            : null;
+    }
+}
+
+/**
+ * This object represents a chat background.
+ */
+class ChatBackground {
+    constructor(chat_background) {
+        this.chat_background = chat_background;
+    }
+
+    /**
+     * Type of the background.
+     * @returns {BackgroundType}
+     */
+    get type() {return this.chat_background.type}
+}
+
+/**
+ * Represents a service message about a new forum topic created.
+ */
+class ForumTopicCreated {
+    constructor(forum_topic_created) {
+        this.forum_topic_created = forum_topic_created;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Name of the topic.
+     * @returns {string}
+     */
+    get name() {
+        return this.forum_topic_created.hasOwnProperty("name")
+            ? this.forum_topic_created.name
+            : null;
+    }
+
+    /**
+     * Color of the topic icon in RGB format.
+     * @returns {number}
+     */
+    get icon_color() {
+        return this.forum_topic_created.hasOwnProperty("icon_color")
+            ? this.forum_topic_created.icon_color
+            : null;
+    }
+
+    /**
+     * Optional. Unique identifier of the custom emoji shown as the topic icon.
+     * @returns {string}
+     */
+    get icon_custom_emoji_id() {
+        return this.forum_topic_created.hasOwnProperty("icon_custom_emoji_id")
+            ? this.forum_topic_created.icon_custom_emoji_id
+            : null;
+    }
+
+    /**
+     * Optional. True if the topic name was implicitly generated.
+     * @returns {boolean}
+     */
+    get is_name_implicit() {
+        return this.forum_topic_created.hasOwnProperty("is_name_implicit")
+            ? this.forum_topic_created.is_name_implicit
+            : null;
+    }
+}
+
+/**
+ * Represents a service message about a closed forum topic.
+ */
+class ForumTopicClosed {
+    constructor(forum_topic_closed) {
+        this.forum_topic_closed = forum_topic_closed;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+}
+
+/**
+ * Represents a service message about an edited forum topic.
+ */
+class ForumTopicEdited {
+    constructor(forum_topic_edited) {
+        this.forum_topic_edited = forum_topic_edited;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Optional. New topic name.
+     * @returns {string}
+     */
+    get name() {
+        return this.forum_topic_edited.hasOwnProperty("name")
+            ? this.forum_topic_edited.name
+            : null;
+    }
+
+    /**
+     * Optional. New topic icon emoji identifier.
+     * Empty string if removed.
+     * @returns {string}
+     */
+    get icon_custom_emoji_id() {
+        return this.forum_topic_edited.hasOwnProperty("icon_custom_emoji_id")
+            ? this.forum_topic_edited.icon_custom_emoji_id
+            : null;
+    }
+}
+
+/**
+ * Represents a service message about a reopened forum topic.
+ */
+class ForumTopicReopened {
+    constructor(forum_topic_reopened) {
+        this.forum_topic_reopened = forum_topic_reopened;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+}
+
+/**
+ * Represents a service message about the General forum topic being hidden.
+ */
+class GeneralForumTopicHidden {
+    constructor(general_forum_topic_hidden) {
+        this.general_forum_topic_hidden = general_forum_topic_hidden;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+}
+
+/**
+ * Represents a service message about the General forum topic being unhidden.
+ */
+class GeneralForumTopicUnhidden {
+    constructor(general_forum_topic_unhidden) {
+        this.general_forum_topic_unhidden = general_forum_topic_unhidden;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+}
+
+/**
+ * Represents a service message about a scheduled giveaway created.
+ */
+class GiveawayCreated {
+    constructor(giveaway_created) {
+        this.giveaway_created = giveaway_created;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Optional. Number of Telegram Stars to split between winners.
+     * @returns {number}
+     */
+    get prize_star_count() {
+        return this.giveaway_created.hasOwnProperty("prize_star_count")
+            ? this.giveaway_created.prize_star_count
+            : null;
+    }
+}
+
+/**
+ * Represents a service message about a completed giveaway.
+ */
+class GiveawayCompleted {
+    constructor(giveaway_completed) {
+        this.giveaway_completed = giveaway_completed;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Number of winners.
+     * @returns {number}
+     */
+    get winner_count() {
+        return this.giveaway_completed.hasOwnProperty("winner_count")
+            ? this.giveaway_completed.winner_count
+            : null;
+    }
+
+    /**
+     * Optional. Number of undistributed prizes.
+     * @returns {number}
+     */
+    get unclaimed_prize_count() {
+        return this.giveaway_completed.hasOwnProperty("unclaimed_prize_count")
+            ? this.giveaway_completed.unclaimed_prize_count
+            : null;
+    }
+
+    /**
+     * Optional. Giveaway message.
+     * @returns {Message}
+     */
+    get giveaway_message() {
+        return this.giveaway_completed.hasOwnProperty("giveaway_message")
+            ? new Message(this.giveaway_completed.giveaway_message)
+            : null;
+    }
+
+    /**
+     * Optional. True if this is a Telegram Star giveaway.
+     * @returns {boolean}
+     */
+    get is_star_giveaway() {
+        return this.giveaway_completed.hasOwnProperty("is_star_giveaway")
+            ? this.giveaway_completed.is_star_giveaway
+            : null;
+    }
+}
+
+/**
+ * Represents a service message about a scheduled video chat.
+ */
+class VideoChatScheduled {
+    constructor(video_chat_scheduled) {
+        this.video_chat_scheduled = video_chat_scheduled;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Unix timestamp of the scheduled start time.
+     * @returns {number}
+     */
+    get start_date() {
+        return this.video_chat_scheduled.hasOwnProperty("start_date")
+            ? this.video_chat_scheduled.start_date
+            : null;
+    }
+}
+
+/**
+ * Represents a service message about a started video chat.
+ */
+class VideoChatStarted {
+    constructor(video_chat_started) {
+        this.video_chat_started = video_chat_started;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+}
+
+/**
+ * Represents a service message about an ended video chat.
+ */
+class VideoChatEnded {
+    constructor(video_chat_ended) {
+        this.video_chat_ended = video_chat_ended;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Duration of the video chat in seconds.
+     * @returns {number}
+     */
+    get duration() {
+        return this.video_chat_ended.hasOwnProperty("duration")
+            ? this.video_chat_ended.duration
+            : null;
+    }
+}
+
+/**
+ * Represents a service message about invited video chat participants.
+ */
+class VideoChatParticipantsInvited {
+    constructor(video_chat_participants_invited) {
+        this.video_chat_participants_invited = video_chat_participants_invited;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Invited users.
+     * @returns {User[]}
+     */
+    get users() {
+        return this.video_chat_participants_invited.hasOwnProperty("users")
+            ? this.video_chat_participants_invited.users.map(u => new User(u))
+            : null;
+    }
+}
+
+/**
  * This object represents a unique message identifier.
  */
 class MessageId {
@@ -309,6 +1004,245 @@ class Message{
             : null;
     }
 
+    /**
+     * Optional. Service message: chat owner has left.
+     * @returns {ChatOwnerLeft}
+     */
+    get chat_owner_left() {
+        return this.message?.chat_owner_left
+            ? new ChatOwnerLeft(this.message.chat_owner_left)
+            : null;
+    }
+
+    /**
+     * Optional. Service message: chat owner changed.
+     * @returns {ChatOwnerChanged}
+     */
+    get chat_owner_changed() {
+        return this.message?.chat_owner_changed
+            ? new ChatOwnerChanged(this.message.chat_owner_changed)
+            : null;
+    }
+
+    /**
+     * Optional. Chat title changed.
+     * @returns {string}
+     */
+    get new_chat_title() {
+        return this.message?.new_chat_title ?? null;
+    }
+
+    /**
+     * Optional. Chat photo changed.
+     * @returns {PhotoSize[]}
+     */
+    get new_chat_photo() {
+        return this.message?.new_chat_photo
+            ? this.message.new_chat_photo.map(p => new PhotoSize(p))
+            : null;
+    }
+
+    /**
+     * Optional. Chat photo deleted.
+     * @returns {boolean}
+     */
+    get delete_chat_photo() {
+        return this.message?.delete_chat_photo ?? false;
+    }
+
+    /**
+     * Optional. Group created.
+     * @returns {boolean}
+     */
+    get group_chat_created() {
+        return this.message?.group_chat_created ?? false;
+    }
+
+    /**
+     * Optional. Supergroup created.
+     * @returns {boolean}
+     */
+    get supergroup_chat_created() {
+        return this.message?.supergroup_chat_created ?? false;
+    }
+
+    /**
+     * Optional. Channel created.
+     * @returns {boolean}
+     */
+    get channel_chat_created() {
+        return this.message?.channel_chat_created ?? false;
+    }
+
+    /**
+     * Optional. Auto delete timer changed.
+     * @returns {MessageAutoDeleteTimerChanged}
+     */
+    get message_auto_delete_timer_changed() {
+        return this.message?.message_auto_delete_timer_changed
+            ? new MessageAutoDeleteTimerChanged(this.message.message_auto_delete_timer_changed)
+            : null;
+    }
+
+    /**
+     * Optional. Users shared.
+     * @returns {UsersShared}
+     */
+    get users_shared() {
+        return this.message?.users_shared
+            ? new UsersShared(this.message.users_shared)
+            : null;
+    }
+
+    /**
+     * Optional. Chat shared.
+     * @returns {ChatShared}
+     */
+    get chat_shared() {
+        return this.message?.chat_shared
+            ? new ChatShared(this.message.chat_shared)
+            : null;
+    }
+
+    /**
+     * Optional. Chat boosted.
+     * @returns {ChatBoostAdded}
+     */
+    get boost_added() {
+        return this.message?.boost_added
+            ? new ChatBoostAdded(this.message.boost_added)
+            : null;
+    }
+
+    /**
+     * Optional. Chat background set.
+     * @returns {ChatBackground}
+     */
+    get chat_background_set() {
+        return this.message?.chat_background_set
+            ? new ChatBackground(this.message.chat_background_set)
+            : null;
+    }
+
+    /**
+     * Optional. Forum topic created.
+     * @returns {ForumTopicCreated}
+     */
+    get forum_topic_created() {
+        return this.message?.forum_topic_created
+            ? new ForumTopicCreated(this.message.forum_topic_created)
+            : null;
+    }
+
+    /**
+     * Optional. Forum topic edited.
+     * @returns {ForumTopicEdited}
+     */
+    get forum_topic_edited() {
+        return this.message?.forum_topic_edited
+            ? new ForumTopicEdited(this.message.forum_topic_edited)
+            : null;
+    }
+
+    /**
+     * Optional. Forum topic closed.
+     * @returns {ForumTopicClosed}
+     */
+    get forum_topic_closed() {
+        return this.message?.forum_topic_closed
+            ? new ForumTopicClosed(this.message.forum_topic_closed)
+            : null;
+    }
+
+    /**
+     * Optional. Forum topic reopened.
+     * @returns {ForumTopicReopened}
+     */
+    get forum_topic_reopened() {
+        return this.message?.forum_topic_reopened
+            ? new ForumTopicReopened(this.message.forum_topic_reopened)
+            : null;
+    }
+
+    /**
+     * Optional. General forum topic hidden.
+     * @returns {GeneralForumTopicHidden}
+     */
+    get general_forum_topic_hidden() {
+        return this.message?.general_forum_topic_hidden
+            ? new GeneralForumTopicHidden(this.message.general_forum_topic_hidden)
+            : null;
+    }
+
+    /**
+     * Optional. General forum topic unhidden.
+     * @returns {GeneralForumTopicUnhidden}
+     */
+    get general_forum_topic_unhidden() {
+        return this.message?.general_forum_topic_unhidden
+            ? new GeneralForumTopicUnhidden(this.message.general_forum_topic_unhidden)
+            : null;
+    }
+
+    /**
+     * Optional. Giveaway created.
+     * @returns {GiveawayCreated}
+     */
+    get giveaway_created() {
+        return this.message?.giveaway_created
+            ? new GiveawayCreated(this.message.giveaway_created)
+            : null;
+    }
+
+    /**
+     * Optional. Giveaway completed.
+     * @returns {GiveawayCompleted}
+     */
+    get giveaway_completed() {
+        return this.message?.giveaway_completed
+            ? new GiveawayCompleted(this.message.giveaway_completed)
+            : null;
+    }
+
+    /**
+     * Optional. Video chat scheduled.
+     * @returns {VideoChatScheduled}
+     */
+    get video_chat_scheduled() {
+        return this.message?.video_chat_scheduled
+            ? new VideoChatScheduled(this.message.video_chat_scheduled)
+            : null;
+    }
+
+    /**
+     * Optional. Video chat started.
+     * @returns {VideoChatStarted}
+     */
+    get video_chat_started() {
+        return this.message?.video_chat_started
+            ? new VideoChatStarted(this.message.video_chat_started)
+            : null;
+    }
+
+    /**
+     * Optional. Video chat ended.
+     * @returns {VideoChatEnded}
+     */
+    get video_chat_ended() {
+        return this.message?.video_chat_ended
+            ? new VideoChatEnded(this.message.video_chat_ended)
+            : null;
+    }
+
+    /**
+     * Optional. Video chat participants invited.
+     * @returns {VideoChatParticipantsInvited}
+     */
+    get video_chat_participants_invited() {
+        return this.message?.video_chat_participants_invited
+            ? new VideoChatParticipantsInvited(this.message.video_chat_participants_invited)
+            : null;
+    }
     // ===== USEFUL METHODS =====
 
     /**
