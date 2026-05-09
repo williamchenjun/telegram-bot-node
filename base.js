@@ -86,9 +86,13 @@ class Context{
      * @param {{interval: number, callback: (update: Update, context: Context) => Promise<void>}} config 
      * @returns {Schedule} Schedule ID.
      */
-    static schedule(config){
-        const schedule = setInterval(config.callback, config.interval);
+    schedule(config){
+        const schedule = setInterval(() => {
+            config.callback(this.update, this);
+        }, config.interval);
+
         console.log(`Scheduled task ${schedule} started.`);
+
         return new Schedule(schedule);
     }
 }
