@@ -954,6 +954,9 @@ class Bot {
     async getChat(chat_id){
         const response = await fetch(this.endpoint + "getChat", {
             method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
             body: JSON.stringify({
                 chat_id: chat_id
             })
@@ -976,6 +979,9 @@ class Bot {
     async getChatMemberCount(chat_id) {
         const response = await fetch(this.endpoint + "getChatMemberCount", {
             method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
             body: JSON.stringify({
                 chat_id: chat_id
             })
