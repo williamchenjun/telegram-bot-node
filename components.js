@@ -766,7 +766,7 @@ class Chat {
     
     /**
      * 
-     * @param {{text: string, parse_mode: string, link_preview_options: LinkPreviewOptions|{is_disabled: boolean, url: string, prefer_small_media: boolean, prefer_large_media: boolean, show_above_text: boolean}, disable_notification: boolean, protect_content: boolean, message_effect_id: string, reply_parameters: ReplyParameters|Object, reply_markup: InlineKeyboardMarkup|Object}} config 
+     * @param {{text: string, parse_mode: string, entities: Array<MessageEntity>, link_preview_options: LinkPreviewOptions|{is_disabled: boolean, url: string, prefer_small_media: boolean, prefer_large_media: boolean, show_above_text: boolean}, disable_notification: boolean, protect_content: boolean, message_effect_id: string, reply_parameters: ReplyParameters|Object, reply_markup: InlineKeyboardMarkup|Object}} config 
      * @returns {Promise<Message>}
      */
     async sendMessage(config){
