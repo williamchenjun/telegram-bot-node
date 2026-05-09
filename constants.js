@@ -180,9 +180,17 @@ class Filters {
      */
     static LEFT_CHAT_MEMBER = 1 << 8;
     /**
+     * @param {number} SERVICE_MESSAGES - Represents service messages.
+     */
+    static SERVICE_MESSAGES = 1 << 9;
+    /**
+     * @param {number} MEDIA - Represents photos, videos and documents.
+     */
+    static MEDIA = Filters.PHOTO | Filters.VIDEO | Filters.DOCUMENT | Filters.MEDIA_GROUP;
+    /**
      * @param {number} ALL - Represent any kind of message.
      */
-    static ALL = Filters.TEXT | Filters.PHOTO | Filters.VIDEO | Filters.DOCUMENT | Filters.COMMAND | Filters.MEDIA_GROUP | Filters.FORWARDED | Filters.NEW_CHAT_MEMBERS | Filters.LEFT_CHAT_MEMBER;
+    static ALL = Filters.TEXT | Filters.PHOTO | Filters.VIDEO | Filters.DOCUMENT | Filters.COMMAND | Filters.MEDIA_GROUP | Filters.FORWARDED | Filters.NEW_CHAT_MEMBERS | Filters.LEFT_CHAT_MEMBER | Filters.SERVICE_MESSAGES;
 
     /**
      * Regex pattern.

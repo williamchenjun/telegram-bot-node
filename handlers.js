@@ -84,6 +84,10 @@ class MessageHandler extends BaseHandler {
                 }
             }
 
+            if (message.photo || message.video || message.document || message.media_group_id) {
+                flags |= Filters.MEDIA;
+            }
+
             if (message.photo){
                 flags |= Filters.PHOTO;
             }
@@ -110,6 +114,10 @@ class MessageHandler extends BaseHandler {
 
             if (message.left_chat_member) {
                 flags |= Filters.LEFT_CHAT_MEMBER;
+            }
+
+            if (message.new_chat_members?.length || message.left_chat_member || message.chat_owner_left || message.chat_owner_changed || message.new_chat_title || message.new_chat_photo || message.delete_chat_photo || message.group_chat_created || message.supergroup_chat_created || message.channel_chat_created || message.message_auto_delete_timer_changed || message.users_shared || message.chat_shared || message.boost_added || message.chat_background_set || message.forum_topic_created || message.forum_topic_edited || message.forum_topic_closed || message.forum_topic_reopened || message.general_forum_topic_hidden || message.general_forum_topic_unhidden || message.giveaway_created || message.giveaway_completed || message.video_chat_scheduled || message.video_chat_started || message.video_chat_ended || message.video_chat_participants_invited) {
+                flags |= Filters.SERVICE_MESSAGES;
             }
 
             return (filter & flags) !== 0;
