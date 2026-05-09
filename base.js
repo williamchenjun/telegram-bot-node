@@ -1,4 +1,4 @@
-import { CallbackQuery, Chat, LinkPreviewOptions, Message, WebhookInfo, _File, User, ChatMember, ChatMemberAdministrator, ChatMemberBanned, ChatMemberMember, ChatMemberLeft, ChatMemberRestricted, ChatMemberOwner, InputFile, ChatMemberUpdated, Document, ChatFullInfo, ChatPermissions, MessageId, UserProfilePhotos, ChatInviteLink, ChatJoinRequest} from "./components.js";
+import { CallbackQuery, Chat, LinkPreviewOptions, Message, WebhookInfo, _File, User, ChatMember, ChatMemberAdministrator, ChatMemberBanned, ChatMemberMember, ChatMemberLeft, ChatMemberRestricted, ChatMemberOwner, InputFile, ChatMemberUpdated, Document, ChatFullInfo, ChatPermissions, MessageId, UserProfilePhotos, ChatInviteLink, ChatJoinRequest, MessageEntity} from "./components.js";
 import { BaseHandler, ConversationHandler } from "./handlers.js";
 import fs from "fs";
 import { FormData } from "node-fetch";
@@ -625,7 +625,7 @@ class Bot {
 
     /**
      * Use this method to send text messages. On success, the sent `Message` is returned.
-     * @param {{chat_id: number|string, message_thread_id: number, text: string, parse_mode: string, link_preview_options: LinkPreviewOptions|{is_disabled: boolean, url: string, prefer_small_media: boolean, prefer_large_media: boolean, show_above_text: boolean}, disable_notification: boolean, protect_content: boolean, message_effect_id: string, reply_parameters: ReplyParameters|Object, reply_markup: InlineKeyboardMarkup|Object}} config 
+     * @param {{chat_id: number|string, message_thread_id: number, text: string, parse_mode: string, entities: MessageEntity[], link_preview_options: LinkPreviewOptions|{is_disabled: boolean, url: string, prefer_small_media: boolean, prefer_large_media: boolean, show_above_text: boolean}, disable_notification: boolean, protect_content: boolean, message_effect_id: string, reply_parameters: ReplyParameters|Object, reply_markup: InlineKeyboardMarkup|Object}} config 
      * @returns {Promise<Message>|Promise<null>}
      */
     async sendMessage(config){
