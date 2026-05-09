@@ -904,6 +904,15 @@ class Chat {
     }
 
     /**
+     * Use this method to get information about a member of a chat. The method is only guaranteed to work for other users if the bot is an administrator in the chat. Returns a ChatMember object on success.
+     * @param {number|string} user_id 
+     * @returns {ChatMember}
+     */
+    async getChatMember(user_id){
+        return await Context.bot.getChatMember({chat_id: this.id, user_id});
+    }
+
+    /**
      * Use this method to generate a new primary invite link for a chat; any previously generated primary link is revoked. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. Returns the new invite link as String on success.
      * 
      * Shortcut of `bot.exportChatInviteLink()`.
