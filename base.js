@@ -4,7 +4,7 @@ import fs from "fs";
 import { FormData } from "node-fetch";
 import fetch from "node-fetch";
 import express from "express";
-import { UpdateType } from "./constants.js";
+import { Permissions, UpdateType } from "./constants.js";
 import { Queue, Schedule } from "./extra.js";
 import path from "path";
 import { fileURLToPath } from 'url';
@@ -376,7 +376,9 @@ class App {
      * Add an update handler.
      * @param {BaseHandler} handler 
      */
-    addHandler(handler){
+    addHandler(handler, permissions = Permissions.MEMBER){
+        handler.requiredPermissions = permissions;
+
         if (handler instanceof ConversationHandler && !this.handlers.conversation){
             this.handlers.conversation = handler;
             return this;
@@ -455,6 +457,58 @@ class App {
     }
 
     /**
+     * Check if use has enough privileges.
+     * @param {Update} update 
+     * @param {Context} context 
+     * @param {Permissions} requiredPermissions 
+     * @returns 
+     */
+    async checkPermissions(update, context, requiredPermissions) {
+        const hasAllPerms = (userPerms, requiredPerms) =>
+            (userPerms & requiredPerms) === requiredPerms;
+
+        const userId = update.effective_user?.id;
+        const chatId = update.effective_chat?.id;
+
+        let userPermissions = Permissions.MEMBER;
+
+        try {
+
+            const admins = await context.bot.getChatAdministrators({
+                chat_id: chatId
+            });
+
+            if (
+                admins?.some(
+                    a =>
+                        a.status === "creator" &&
+                        a.user?.id === userId
+                )
+            ) {
+                userPermissions |=
+                    Permissions.OWNER | Permissions.ADMIN;
+            }
+            else if (
+                admins?.some(
+                    a =>
+                        a.status === "administrator" &&
+                        a.user?.id === userId
+                )
+            ) {
+                userPermissions |= Permissions.ADMIN;
+            }
+
+        } catch (e) {
+            console.error("getChatAdministrators failed:", e);
+        }
+
+        return hasAllPerms(
+            userPermissions,
+            requiredPermissions
+        );
+    }
+
+    /**
      * Retrieves the update object and passes it to the handlers.
      * @param {Update} update 
      * @returns 
@@ -487,6 +541,17 @@ class App {
             for (const handler of this.handlers.global){
                 // await handler.handle(this.update, this.context);
                 try {
+
+                    const allowed = await this.checkPermissions(
+                        update,
+                        context,
+                        handler.requiredPermissions
+                    );
+
+                    if (!allowed) {
+                        continue;
+                    }
+
                     await handler.handle(update, context);
                 } catch (error) {
                     console.error("Handler error:", error);
