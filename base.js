@@ -461,37 +461,38 @@ class App {
      */
     async getUpdates(update){
         this.update = update;
-        if (this.update.update_id === this.last_update_id) return;
-        this.last_update_id = this.update.update_id;
+        if (update.update_id === this.last_update_id) return;
+        this.last_update_id = update.update_id;
         if (!this.bot) throw new Error("The bot instance does not exist.");
         // if (!this.context) this.context = new Context(this.update, this.bot);
 
         // this.context.update = this.update;
-        const context = new Context(this.update, this.bot);
+        const context = new Context(update, this.bot);
         
 
-        this.#queue.addTask(() => new Promise(async res => {
+        this.#queue.addTask(async () => {
             await this._applyRateLimit();
+
             if (this.handlers.conversation){
                 // const handled = await this.handlers.conversation.handle(this.update, this.context);
-                const handled = await this.handlers.conversation.handle(this.update, context);
+                const handled = await this.handlers.conversation.handle(update, context);
+
                 if (this.handlers.conversation.isEnded){
                     this.handlers.conversation.reset();
                 }
+
                 if (handled) return;
             }
     
             for (const handler of this.handlers.global){
                 // await handler.handle(this.update, this.context);
                 try {
-                    await handler.handle(this.update, context);
+                    await handler.handle(update, context);
                 } catch (error) {
                     console.error("Handler error:", error);
                 }
             }
-
-            res();
-        }));
+        });
 
         if (!this.#queue.running){
             await this.#queue.processQueue();
