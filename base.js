@@ -483,7 +483,11 @@ class App {
     
             for (const handler of this.handlers.global){
                 // await handler.handle(this.update, this.context);
-                await handler.handle(this.update, context);
+                try {
+                    await handler.handle(this.update, context);
+                } catch (error) {
+                    console.error("Handler error:", error);
+                }
             }
 
             res();
