@@ -457,19 +457,21 @@ class App {
     }
 
     /**
-     * Check if use has enough privileges.
-     * @param {Update} update 
-     * @param {Context} context 
-     * @param {Permissions} requiredPermissions 
-     * @returns 
+     * Check if a user has enough privileges.
+     * @param {Update} update
+     * @param {Context} context
+     * @param {number} requiredPermissions
+     * @returns {Promise<boolean>}
      */
     async checkPermissions(update, context, requiredPermissions) {
+
         const hasAllPerms = (userPerms, requiredPerms) =>
             (userPerms & requiredPerms) === requiredPerms;
 
         const userId = update.effective_user?.id;
         const chatId = update.effective_chat?.id;
 
+        // Every user starts as MEMBER.
         let userPermissions = Permissions.MEMBER;
 
         try {
@@ -478,28 +480,29 @@ class App {
                 chat_id: chatId
             });
 
-            if (
-                admins?.some(
-                    a =>
-                        a.status === "creator" &&
-                        a.user?.id === userId
-                )
-            ) {
-                userPermissions |=
-                    Permissions.OWNER | Permissions.ADMIN;
-            }
-            else if (
-                admins?.some(
-                    a =>
-                        a.status === "administrator" &&
-                        a.user?.id === userId
-                )
-            ) {
+            const member = admins?.find(a => a.user?.id === userId);
+
+            // Owner permissions:
+            // OWNER + ADMIN + MEMBER
+            if (member?.status === "creator") {
+
+                userPermissions |= Permissions.OWNER;
                 userPermissions |= Permissions.ADMIN;
             }
 
-        } catch (e) {
-            console.error("getChatAdministrators failed:", e);
+            // Admin permissions:
+            // ADMIN + MEMBER
+            else if (member?.status === "administrator") {
+
+                userPermissions |= Permissions.ADMIN;
+            }
+
+        } catch (error) {
+
+            console.error(
+                "getChatAdministrators failed:",
+                error
+            );
         }
 
         return hasAllPerms(
