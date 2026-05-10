@@ -1,5 +1,5 @@
 import {filterObject} from "./utils.js";
-import { App, Context } from "./base.js";
+import { Context } from "./base.js";
 
 /**
  * Describes a service message about the chat owner leaving the chat.
@@ -1704,9 +1704,6 @@ class Chat {
      * @returns {Promise<Message>}
      */
     async sendMessage(config){
-        let params = App.HTTP({method: "sendMessage", params: config});
-        console.log("DEBUG PARAMS 1:", {chat_id: this.id, ...config});
-        console.log("DEBUG PARAMS 2:", params);
         return await Context.bot.sendMessage({chat_id: this.id, ...config});
     }
     
