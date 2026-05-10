@@ -1248,15 +1248,23 @@ class Message{
     /**
      * Message deep link.
      * 
-     * For example: `https://t.me/c/123456/12`.
+     * For example: `https://t.me/c/<chat_id>/<message_id>` or `https://t.me/c/<chat_id>/<thread_id>/<message_id>` if it's a forum.
      * 
      * @returns {Promise<string>|Promise<null>}
      */
     async message_link(){
         const chat = await Context.bot.getChat(this.chat.id);
-        if (chat){
+        let chat_id = String(this.chat.id);
+
+        if (chat_id.startsWith("-100")) {
+            chat_id = chat_id.slice(4);
+        }
+
+        if (chat && !chat.is_forum){
             if (chat?.username) return `https://t.me/${chat.username}/${this.message_id}`;
-            return `https://t.me/c/${this.chat.id}/${this.message_id}`;
+            return `https://t.me/c/${chat_id}/${this.message_id}`;
+        } else {
+            return `https://t.me/c/${chat_id}/${this.message_thread_id}/${this.message_id}`;
         }
         return null;
     }
