@@ -711,6 +711,7 @@ class Bot {
      */
     async sendMessage(config){
         let params = App.HTTP({method: "sendMessage", params: config});
+        console.log("DEBUG PARAMS:", params);
         const response = await fetch(this.endpoint, params);
         if (!response.ok){
             console.error("Error:", await response.text());
