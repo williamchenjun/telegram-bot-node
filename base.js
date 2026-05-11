@@ -415,7 +415,7 @@ class App {
         return this;
     }
 
-    async dispatchHandlers(handlers, update, context) {
+    async dispatchHandlers(handlers, update, context, stopOnHandled = true) {
         for (const handler of handlers) {
             try {
                 const allowed = await this.checkPermissions(
@@ -430,7 +430,7 @@ class App {
 
                 const handled = await handler.handle(update, context);
 
-                if (handled) {
+                if (handled && stopOnHandled) {
                     return true;
                 }
 
@@ -612,15 +612,27 @@ class App {
             switch (update.type) {
                 case "message": {
                     const text = update.message?.text;
+
+                    await this.dispatchHandlers(
+                        this.handlers.message,
+                        update,
+                        context,
+                        false
+                    );
+
                     if (
                         typeof text === "string" &&
                         text.startsWith("/")
                     ) {
-                        handlers = this.handlers.command;
-                    } else {
-                        handlers = this.handlers.message;
+                        await this.dispatchHandlers(
+                            this.handlers.command,
+                            update,
+                            context,
+                            true
+                        );
                     }
-                    break;
+
+                    return;
                 }
                 case "callback_query":
                     handlers = this.handlers.callback_query;
