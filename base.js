@@ -1,5 +1,5 @@
-import { CallbackQuery, Chat, LinkPreviewOptions, Message, WebhookInfo, _File, User, ChatMember, ChatMemberAdministrator, ChatMemberBanned, ChatMemberMember, ChatMemberLeft, ChatMemberRestricted, ChatMemberOwner, InputFile, ChatMemberUpdated, Document, ChatFullInfo, ChatPermissions, MessageId, UserProfilePhotos, ChatInviteLink, ChatJoinRequest, MessageEntity} from "./components.js";
-import { BaseHandler, ConversationHandler } from "./handlers.js";
+import { CallbackQuery, Chat, LinkPreviewOptions, Message, WebhookInfo, _File, User, ChatMember, ChatMemberAdministrator, ChatMemberBanned, ChatMemberMember, ChatMemberLeft, ChatMemberRestricted, ChatMemberOwner, InputFile, ChatMemberUpdated, Document, ChatFullInfo, ChatPermissions, MessageId, UserProfilePhotos, ChatInviteLink, ChatJoinRequest, MessageEntity } from "./components.js";
+import { BaseHandler, CallbackQueryHandler, ChatMemberHandler, CommandHandler, ConversationHandler, MessageHandler } from "./handlers.js";
 import fs from "fs";
 import { FormData } from "node-fetch";
 import fetch from "node-fetch";
@@ -16,7 +16,7 @@ const __dirname = path.dirname(__filename);
 /**
  * Represents the context of the bot instance.
  */
-class Context{
+class Context {
     /**
      * The shared bot instance.
      * @type {Bot|null}
@@ -37,7 +37,7 @@ class Context{
      * @param {Update} update 
      * @param {Bot} bot 
      */
-    constructor (update, bot){
+    constructor(update, bot) {
         /**
          * An update.
          */
@@ -65,8 +65,8 @@ class Context{
      * @param {Document} document 
      * @returns {Promise<_File>|null}
      */
-    async getFile(document){
-        if (document.file_size > 20*1024) {
+    async getFile(document) {
+        if (document.file_size > 20 * 1024) {
             console.error("File size is too big.");
             return;
         }
@@ -86,7 +86,7 @@ class Context{
      * @param {{interval: number, callback: (update: Update, context: Context) => Promise<void>}} config 
      * @returns {Schedule} Schedule ID.
      */
-    schedule(config){
+    schedule(config) {
         const schedule = setInterval(() => {
             config.callback(this.update, this);
         }, config.interval);
@@ -104,7 +104,7 @@ class Update {
     // /**@type {ChatMember} */
     // #chat_member = null;
 
-    constructor(update){
+    constructor(update) {
         this.update = update;
     }
 
@@ -112,10 +112,10 @@ class Update {
      * Get the update type.
      * @returns {'message'|'edited_message'|'channel_post'|'edited_channel_post'|'business_connection'|'business_message'|'edited_business_message'|'deleted_business_message'|'message_reaction'|'message_reaction_count'|'inline_query'|'chosen_inline_result'|'callback_query'|'shipping_query'|'pre_checkout_query'|'purchased_paid_media'|'poll'|'my_chat_member'|'chat_member'|'chat_join_request'|'chat_boost'|'removed_chat_boost'}
      */
-    get type(){
+    get type() {
         const types = UpdateType.ALL;
-        for (const type of types){
-            if (this.update.hasOwnProperty(type)){
+        for (const type of types) {
+            if (this.update.hasOwnProperty(type)) {
                 return type;
             }
         }
@@ -125,42 +125,42 @@ class Update {
     /**
      * @returns {number} The update's unique identifier. Update identifiers start from a certain positive number and increase sequentially. This identifier becomes especially handy if you're using webhooks, since it allows you to ignore repeated updates or to restore the correct update sequence, should they get out of order. If there are no new updates for at least a week, then identifier of the next update will be chosen randomly instead of sequentially.
      */
-    get update_id() {return this.update.update_id;}
+    get update_id() { return this.update.update_id; }
     /**
      * @returns {Message} New incoming message of any kind - text, photo, sticker, etc..
      */
-    get message() {return this.update.hasOwnProperty("message")? new Message(this.update.message): null;}
+    get message() { return this.update.hasOwnProperty("message") ? new Message(this.update.message) : null; }
     /**
      * @returns {Message} New version of a message that is known to the bot and was edited. This update may at times be triggered by changes to message fields that are either unavailable or not actively used by your bot.
      */
-    get edited_message() {return this.update.hasOwnProperty("edited_message")? new Message(this.update.edited_message): null;}
+    get edited_message() { return this.update.hasOwnProperty("edited_message") ? new Message(this.update.edited_message) : null; }
     /**
      * @returns {Message} New incoming channel post of any kind - text, photo, sticker, etc..
      */
-    get channel_post() {return this.update.hasOwnProperty("channel_post")? new Message(this.update.channel_post): null;}
+    get channel_post() { return this.update.hasOwnProperty("channel_post") ? new Message(this.update.channel_post) : null; }
     /**
      * @returns {Message} New version of a channel post that is known to the bot and was edited. This update may at times be triggered by changes to message fields that are either unavailable or not actively used by your bot.
      */
-    get edited_channel_post() {return this.update.hasOwnProperty("edited_channel_post")? new Message(this.update.edited_channel_post): null;}
+    get edited_channel_post() { return this.update.hasOwnProperty("edited_channel_post") ? new Message(this.update.edited_channel_post) : null; }
     /**
      * @returns {CallbackQuery} New incoming callback query.
      */
-    get callback_query() {return this.update.hasOwnProperty("callback_query")? new CallbackQuery(this.update.callback_query): null;}
+    get callback_query() { return this.update.hasOwnProperty("callback_query") ? new CallbackQuery(this.update.callback_query) : null; }
     /**
      * @returns {Chat} The effective chat the update comes from.
      */
     get effective_chat() {
-        if(this.update?.message){
+        if (this.update?.message) {
             let message = new Message(this.update.message);
             return message.chat;
-        } else if (this.update?.callback_query){
+        } else if (this.update?.callback_query) {
             let message = new Message(this.update.callback_query.message);
             return message.chat;
-        } else if (this.update?.chat_member){
+        } else if (this.update?.chat_member) {
             return new Chat(this.update.chat_member.chat);
-        } else if (this.update?.my_chat_member){
+        } else if (this.update?.my_chat_member) {
             return new Chat(this.update.my_chat_member.chat);
-        }  else if (this.update?.channel_post){
+        } else if (this.update?.channel_post) {
             let message = new Message(this.update.channel_post);
             return message.chat;
         }
@@ -169,15 +169,15 @@ class Update {
      * @returns {User} The effective user the update comes from.
      */
     get effective_user() {
-        if(this.update.hasOwnProperty("message")){
+        if (this.update.hasOwnProperty("message")) {
             let message = new Message(this.update.message);
             let chat_id = message.chat.id;
             Context.botData.set("effective_user_chat_id", chat_id);
             return message.from;
-        } else if (this.update.hasOwnProperty("callback_query")){
+        } else if (this.update.hasOwnProperty("callback_query")) {
             let user = new User(this.update.callback_query.from);
             return user;
-        } else if (this.update?.chat_member){
+        } else if (this.update?.chat_member) {
             return new User(this.update.chat_member.from);
         }
     }
@@ -185,13 +185,13 @@ class Update {
      * @returns {Message} The effective message that is sent.
      */
     get effective_message() {
-        if(this.update.hasOwnProperty("message")){
+        if (this.update.hasOwnProperty("message")) {
             let message = new Message(this.update.message);
             return message;
-        } else if (this.update.hasOwnProperty("callback_query")){
+        } else if (this.update.hasOwnProperty("callback_query")) {
             let message = new Message(this.update.callback_query.message);
             return message;
-        } else if (this.update?.channel_post){
+        } else if (this.update?.channel_post) {
             let message = new Message(this.update.channel_post);
             return message;
         }
@@ -201,7 +201,7 @@ class Update {
      * Optional. A chat member's status was updated in a chat. The bot must be an administrator in the chat and must explicitly specify "chat_member" in the list of allowed_updates to receive these updates.
      * @returns {ChatMemberUpdated}
      */
-    get chat_member(){return this.update?.chat_member ? new ChatMemberUpdated(this.update.chat_member) : null}
+    get chat_member() { return this.update?.chat_member ? new ChatMemberUpdated(this.update.chat_member) : null }
 
     // set chat_member(value){
     //     this.#chat_member = value;
@@ -211,18 +211,18 @@ class Update {
      * Optional. The bot's chat member status was updated in a chat. For private chats, this update is received only when the bot is blocked or unblocked by the user.
      * @returns {ChatMemberUpdated}
      */
-    get my_chat_member(){return this.update?.my_chat_member ? new ChatMemberUpdated(this.update.my_chat_member) : null}
-    
+    get my_chat_member() { return this.update?.my_chat_member ? new ChatMemberUpdated(this.update.my_chat_member) : null }
+
     /**
      * Optional. A request to join the chat has been sent. The bot must have the can_invite_users administrator right in the chat to receive these updates.
      * @returns {ChatJoinRequest}
      */
-    get chat_join_request(){return this.update?.chat_join_request ? new ChatJoinRequest(this.update.chat_join_request) : null}
+    get chat_join_request() { return this.update?.chat_join_request ? new ChatJoinRequest(this.update.chat_join_request) : null }
 
     toJSON() {
-        return {...this};
+        return { ...this };
     }
-    
+
 }
 
 /**
@@ -242,7 +242,7 @@ class App {
      * Store a number of past updates.
      * @param {Update} item 
      */
-    static cache(item){
+    static cache(item) {
         App.updateHistory.push(item);
 
         if (App.updateHistory.length > 40) {
@@ -250,14 +250,21 @@ class App {
         }
     }
 
-    constructor (){
+    constructor() {
         this.api_key = null;
         this.update = null;
         this.context = null;
         this.last_update_id = null;
         this.bot = null;
+        // this.handlers = {
+        //     global: [],
+        //     conversation: null
+        // };
         this.handlers = {
-            global: [],
+            command: [],
+            message: [],
+            callback_query: [],
+            chat_member: [],
             conversation: null
         };
         this.server = null;
@@ -275,7 +282,7 @@ class App {
      * Configure the app.
      * @param {{test: boolean}} options 
      */
-    config(options){
+    config(options) {
         this.test_mode = options.test;
         return this;
     }
@@ -285,9 +292,9 @@ class App {
      * @param {{method: string, params: object|FormData, type: string}} config 
      * @returns 
      */
-    static HTTP(config){
-        
-        if (config.params instanceof FormData){
+    static HTTP(config) {
+
+        if (config.params instanceof FormData) {
             return {
                 method: "POST",
                 body: config.params,
@@ -301,9 +308,9 @@ class App {
                     "Content-Type": config.type || type,
                 }),
                 body: JSON.stringify({
-                method: config.method, 
-                ...config.params,
-                ...App.defaultParams
+                    method: config.method,
+                    ...config.params,
+                    ...App.defaultParams
                 }),
             };
         }
@@ -315,13 +322,13 @@ class App {
      * @param {string} path 
      * @param {(req: import("express").Request, res: import("express").Response) => Promise<void>} callback 
      */
-    addEndPoint(method = "GET", path = "/", callback){
+    addEndPoint(method = "GET", path = "/", callback) {
         if (!this.express) {
             console.error("Express server is uninitialised.");
             return;
         }
 
-        if (method === "GET"){
+        if (method === "GET") {
             return this.express.get(path, callback);
         }
 
@@ -333,7 +340,7 @@ class App {
      * @param {{parse_mode:string, link_preview_options: LinkPreviewOptions, disable_notification: boolean, protect_content: boolean}} config 
      * @returns 
      */
-    defaults(config){
+    defaults(config) {
         App.defaultParams = config;
         return this;
     }
@@ -343,7 +350,7 @@ class App {
      * @param {string} url 
      * @returns 
      */
-    baseUrl(url){
+    baseUrl(url) {
         this.base_url = url;
         return this;
     }
@@ -353,7 +360,7 @@ class App {
      * @param {string} api_key 
      * @returns 
      */
-    token(api_key){
+    token(api_key) {
         this.api_key = api_key;
         return this;
     }
@@ -362,10 +369,10 @@ class App {
      * Initialize the app and create a bot instance in the current context.
      * @returns {App}
      */
-    build(){
+    build() {
         if (!this.api_key) throw new Error("API KEY needs to be passed first.");
         this.bot = new Bot(this.api_key, this.test_mode);
-        if (this.base_url){
+        if (this.base_url) {
             this.bot.endpoint = `${this.base_url}${this.api_key}/${this.test_mode ? "test/" : ""}`;
         }
         Context.bot = this.bot;
@@ -376,16 +383,63 @@ class App {
      * Add an update handler.
      * @param {BaseHandler} handler 
      */
-    addHandler(handler, permissions = Permissions.MEMBER){
+    addHandler(handler, permissions = Permissions.MEMBER) {
         handler.requiredPermissions = permissions;
 
-        if (handler instanceof ConversationHandler && !this.handlers.conversation){
+        if (handler instanceof ConversationHandler && !this.handlers.conversation) {
             this.handlers.conversation = handler;
             return this;
         }
 
-        this.handlers.global.push(handler);
+        // this.handlers.global.push(handler);
+        if (handler instanceof CommandHandler) {
+            this.handlers.command.push(handler);
+        }
+
+        else if (handler instanceof MessageHandler) {
+            this.handlers.message.push(handler);
+        }
+
+        else if (handler instanceof CallbackQueryHandler) {
+            this.handlers.callback_query.push(handler);
+        }
+
+        else if (handler instanceof ChatMemberHandler) {
+            this.handlers.chat_member.push(handler);
+        }
+
+        else {
+            throw new Error("Unknown handler type.");
+        }
+
         return this;
+    }
+
+    async dispatchHandlers(handlers, update, context) {
+        for (const handler of handlers) {
+            try {
+                const allowed = await this.checkPermissions(
+                    update,
+                    context,
+                    handler.requiredPermissions
+                );
+
+                if (!allowed) {
+                    continue;
+                }
+
+                const handled = await handler.handle(update, context);
+
+                if (handled) {
+                    return true;
+                }
+
+            } catch (error) {
+                console.error("Handler error:", error);
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -394,15 +448,15 @@ class App {
      * @param {{url:string, drop_pending_updates: boolean, max_connections: number, certificate: InputFile, ip_address: string, secret_token: string, allowed_updates: string[]}} config
      * @returns 
      */
-    async setWebhook(config){
-        let params = App.HTTP({method: "setWebhook", params: {...config}});
+    async setWebhook(config) {
+        let params = App.HTTP({ method: "setWebhook", params: { ...config } });
         const response = await fetch(this.bot.endpoint, params);
         const data = await response.json();
-    
-        if (response.ok && data.url != ''){
+
+        if (response.ok && data.url != '') {
             return true;
         }
-    
+
         throw new Error("Failed to set the webhook:", data);
     }
 
@@ -410,15 +464,15 @@ class App {
      * Delete the webhook.
      * @returns {Promise<boolean>|Promise<Error>}
      */
-    async deleteWebhook(){
-    
-        let config = App.HTTP({method: "deleteWebhook", params: {}});
+    async deleteWebhook() {
+
+        let config = App.HTTP({ method: "deleteWebhook", params: {} });
         const response = await fetch(this.bot.endpoint, config);
-    
-        if (response.ok){
+
+        if (response.ok) {
             return true;
         }
-    
+
         throw new Error("Failed to delete the webhook.");
     }
 
@@ -426,12 +480,12 @@ class App {
      * Retrieve information about the webhook.
      * @returns {Promise<boolean>|Promise<WebhookInfo>}
      */
-    async getWebhookInfo(){
-        let config = App.HTTP({method: "getWebhookInfo", params: {}});
+    async getWebhookInfo() {
+        let config = App.HTTP({ method: "getWebhookInfo", params: {} });
         const response = await fetch(this.bot.endpoint, config);
         const data = await response.json();
-    
-        if (response.ok){
+
+        if (response.ok) {
             return new WebhookInfo(data.result);
         } else {
             console.warn("No webhook information:", data);
@@ -516,53 +570,75 @@ class App {
      * @param {Update} update 
      * @returns 
      */
-    async getUpdates(update){
+    async getUpdates(update) {
         this.update = update;
-        if (update.update_id === this.last_update_id) return;
-        this.last_update_id = update.update_id;
-        if (!this.bot) throw new Error("The bot instance does not exist.");
-        // if (!this.context) this.context = new Context(this.update, this.bot);
 
-        // this.context.update = this.update;
+        if (update.update_id === this.last_update_id) {
+            return;
+        }
+
+        this.last_update_id = update.update_id;
+
+        if (!this.bot) {
+            throw new Error("The bot instance does not exist.");
+        }
+
         const context = new Context(update, this.bot);
-        
 
         this.#queue.addTask(async () => {
+
             await this._applyRateLimit();
 
-            if (this.handlers.conversation){
-                // const handled = await this.handlers.conversation.handle(this.update, this.context);
-                const handled = await this.handlers.conversation.handle(update, context);
+            // Conversation handlers first
+            if (this.handlers.conversation) {
 
-                if (this.handlers.conversation.isEnded){
+                const handled =
+                    await this.handlers.conversation.handle(
+                        update,
+                        context
+                    );
+
+                if (this.handlers.conversation.isEnded) {
                     this.handlers.conversation.reset();
                 }
 
-                if (handled) return;
-            }
-    
-            for (const handler of this.handlers.global){
-                // await handler.handle(this.update, this.context);
-                try {
-
-                    const allowed = await this.checkPermissions(
-                        update,
-                        context,
-                        handler.requiredPermissions
-                    );
-
-                    if (!allowed) {
-                        continue;
-                    }
-
-                    await handler.handle(update, context);
-                } catch (error) {
-                    console.error("Handler error:", error);
+                if (handled) {
+                    return;
                 }
             }
+
+            let handlers = [];
+
+            switch (update.type) {
+                case "message": {
+                    const text = update.message?.text;
+                    if (
+                        typeof text === "string" &&
+                        text.startsWith("/")
+                    ) {
+                        handlers = this.handlers.command;
+                    } else {
+                        handlers = this.handlers.message;
+                    }
+                    break;
+                }
+                case "callback_query":
+                    handlers = this.handlers.callback_query;
+                    break;
+                case "chat_member":
+                case "my_chat_member":
+                    handlers = this.handlers.chat_member;
+                    break;
+            }
+
+            await this.dispatchHandlers(
+                handlers,
+                update,
+                context
+            );
         });
 
-        if (!this.#queue.running){
+        if (!this.#queue.running) {
             await this.#queue.processQueue();
         }
     }
@@ -572,24 +648,26 @@ class App {
      * @param {{offset: number, limit: number, timeout: number, allowed_updates: string[]}} config 
      * @param {boolean} debug
      */
-    async run_polling(config, debug){
+    async run_polling(config, debug) {
         if (this.timeout) clearTimeout(this.timeout)
         try {
-            const params = App.HTTP({method: "getUpdates", params: {
-                offset: this.update_offset,
-                ...config
-            }});
+            const params = App.HTTP({
+                method: "getUpdates", params: {
+                    offset: this.update_offset,
+                    ...config
+                }
+            });
             const response = await fetch(this.bot.endpoint, params);
 
-            if (!response.ok){
+            if (!response.ok) {
                 throw new Error(`Unable to fetch updates (${response.status}): ${await response.text()}`);
             }
 
             const updates = await response.json();
 
-            if (updates.ok && updates.result.length){
+            if (updates.ok && updates.result.length) {
                 if (debug) console.log(`[${new Date().toISOString()}] Update ${updates.result.at(-1).update_id}:\n${JSON.stringify(updates.result.at(-1))}`);
-                for (const data of updates.result){
+                for (const data of updates.result) {
                     const update = new Update(data);
                     await this.getUpdates(update);
                     // if (update.update_id > this.update_offset){
@@ -609,12 +687,12 @@ class App {
      * Starts up the webhook for the bot. If you don't have `.env` file set up, you will need to define these values manually.
      * @param {{url: string, allowed_updates:string[], webhookPath: string, port: number, serverTimeout: number, secretToken: string, debug: boolean}} config 
      */
-    async run(config = {}){
+    async run(config = {}) {
         if (this.server) {
             console.warn("Server already running.");
             return;
         }
-        
+
         const app = express();
         this.express = app;
         const PORT = config.port || 3000;
@@ -622,11 +700,11 @@ class App {
         app.use(cors());
 
         app.post(config.webhookPath || "/", async (req, res) => {
-            if (config?.debug){
+            if (config?.debug) {
                 console.log("DEBUG:", JSON.stringify(req.body, null, 2));
             }
             const incomingToken = req.headers["x-telegram-bot-api-secret-token"];
-            
+
             if ((process.env.SECRET_TOKEN || config.secretToken) && ![process.env.SECRET_TOKEN, config.secretToken].includes(incomingToken)) {
                 console.warn('Invalid secret token:', incomingToken);
                 return res.status(403).send('Forbidden');
@@ -650,30 +728,30 @@ class App {
                 const webhookInfo = await this.getWebhookInfo();
 
                 // If webhook is already set at the correct URL, don't reset.
-                if (webhookInfo.url === url){
+                if (webhookInfo.url === url) {
                     console.log(`Webhook is already set at ${url}`);
                     return;
                 }
 
                 // If webhook is set to a different url, reset.
-                if (webhookInfo.url){
+                if (webhookInfo.url) {
                     try {
                         const deleted = await this.deleteWebhook();
-                        if (deleted){
+                        if (deleted) {
                             console.log("Webhook deleted.");
                         }
                     } catch (error) {
                         console.error(`Unable to delete webhook:`, error);
                     }
                 }
-                
+
                 const allowed_updates = config.allowed_updates || [UpdateType.ALL];
 
                 // If webhook is set incorrectly or unset, set it up.
-                await this.setWebhook({url: url, drop_pending_updates: true, secret_token: process.env.SECRET_TOKEN, allowed_updates: allowed_updates});
+                await this.setWebhook({ url: url, drop_pending_updates: true, secret_token: process.env.SECRET_TOKEN, allowed_updates: allowed_updates });
                 console.log(`Webhook set at ${url}`);
             });
-        
+
             this.server.timeout = config.serverTimeout || 0;
         })();
     }
@@ -699,7 +777,7 @@ class Bot {
      * 
      * @param {string} token 
      */
-    constructor (token, test_mode = false){
+    constructor(token, test_mode = false) {
         this.token = token;
         this.endpoint = `https://api.telegram.org/bot${token}/${test_mode ? "test/" : ""}`
     }
@@ -709,10 +787,10 @@ class Bot {
      * @param {{chat_id: number|string, message_thread_id: number, text: string, parse_mode: string, entities: MessageEntity[], link_preview_options: LinkPreviewOptions|{is_disabled: boolean, url: string, prefer_small_media: boolean, prefer_large_media: boolean, show_above_text: boolean}, disable_notification: boolean, protect_content: boolean, message_effect_id: string, reply_parameters: ReplyParameters|Object, reply_markup: InlineKeyboardMarkup|Object}} config 
      * @returns {Promise<Message>|Promise<null>}
      */
-    async sendMessage(config){
-        let params = App.HTTP({method: "sendMessage", params: config});
+    async sendMessage(config) {
+        let params = App.HTTP({ method: "sendMessage", params: config });
         const response = await fetch(this.endpoint, params);
-        if (!response.ok){
+        if (!response.ok) {
             console.error("Error:", await response.text());
             return null;
         }
@@ -732,14 +810,14 @@ class Bot {
      * @param {{chat_id: number|string, message_thread_id: number, photo: InputFile|Blob|string, caption:string, parse_mode:string, caption_entities: Array<MessageEntity>, show_caption_above_media: boolean, has_spoiler:boolean, disable_notification:boolean, protect_content: boolean, message_effect_id: string, reply_parameters: ReplyParameters, reply_markup:InlineKeyboardMarkup}} config 
      * @returns {Promise<Message>}
      */
-    async sendPhoto(config){
+    async sendPhoto(config) {
         const formdata = new FormData();
-        for (const [key, val] of Object.entries({...config, ...App.defaultParams})){
-        formdata.append(key, val);
+        for (const [key, val] of Object.entries({ ...config, ...App.defaultParams })) {
+            formdata.append(key, val);
         }
-        let params = App.HTTP({params: formdata});
+        let params = App.HTTP({ params: formdata });
         const response = await fetch(this.endpoint + "sendPhoto", params)
-        .then(resp => resp.json());
+            .then(resp => resp.json());
         return new Message(response.result);
     }
 
@@ -758,10 +836,10 @@ class Bot {
      * @param {{chat_id: number|string, message_id: number}} config 
      * @returns {Promise<boolean>}
      */
-    async deleteMessage(config){
-        let params = App.HTTP({method: "deleteMessage", params: config});
+    async deleteMessage(config) {
+        let params = App.HTTP({ method: "deleteMessage", params: config });
         const response = await fetch(this.endpoint, params)
-        .then(resp => resp.json());
+            .then(resp => resp.json());
         return response.result;
     }
 
@@ -773,10 +851,10 @@ class Bot {
      * @param {{chat_id: number|string, user_id: number, until_date: number, revoke_messages: boolean}} config 
      * @returns {Promise<boolean>}
      */
-    async banChatMember(config){
-        let params = App.HTTP({method: "banChatMember", params: config});
+    async banChatMember(config) {
+        let params = App.HTTP({ method: "banChatMember", params: config });
         const response = await fetch(this.endpoint, params)
-        .then(resp => resp.json());
+            .then(resp => resp.json());
         return response.result;
     }
 
@@ -785,10 +863,10 @@ class Bot {
      * @param {{chat_id: number|string, user_id: number, only_if_banned: boolean}} config 
      * @returns {Promise<boolean>}
      */
-    async unbanChatMember(config){
-        let params = App.HTTP({method: "unbanChatMember", params: config});
+    async unbanChatMember(config) {
+        let params = App.HTTP({ method: "unbanChatMember", params: config });
         const response = await fetch(this.endpoint, params)
-        .then(resp => resp.json());
+            .then(resp => resp.json());
         return response.result;
     }
 
@@ -797,10 +875,10 @@ class Bot {
      * @param {{callback_query_id: string, text: string, show_alert: boolean, url: string, cache_time: number}} config 
      * @returns {Promise<boolean>}
      */
-    async answerCallbackQuery(config){
-        let params = App.HTTP({method: "answerCallbackQuery", params: config});
+    async answerCallbackQuery(config) {
+        let params = App.HTTP({ method: "answerCallbackQuery", params: config });
         const response = await fetch(this.endpoint, params)
-        .then(resp => resp.json());
+            .then(resp => resp.json());
         return response.result;
     }
 
@@ -816,15 +894,15 @@ class Bot {
      * @param {{chat_id: string|number, message_thread_id: number, video: InputFile|Blob|string, duration: number, width: number, height: number, thumbnail: InputFile|string, caption: string, parse_mode: string, caption_entities: Array<MessageEntity>, show_caption_above_media: boolean, has_spoiler: boolean, supports_streaming: boolean, disable_notification: boolean, protect_content: boolean, message_effect_id: string, reply_parameters: ReplyParameters, reply_markup: InlineKeyboardMarkup}} config 
      * @returns {Promise<Message>}
      */
-    async sendVideo(config){
+    async sendVideo(config) {
         const formdata = new FormData();
-        for (const [key, val] of Object.entries({...config, ...App.defaultParams})){
+        for (const [key, val] of Object.entries({ ...config, ...App.defaultParams })) {
             formdata.append(key, val);
         }
 
-        let params = App.HTTP({params: formdata});
+        let params = App.HTTP({ params: formdata });
         const response = await fetch(this.endpoint + "sendVideo", params)
-        .then(resp => resp.json());
+            .then(resp => resp.json());
         return new Message(response.result);
     }
 
@@ -833,15 +911,15 @@ class Bot {
      * @param {{chat_id: string|number, message_id: number, inline_message_id: string, text: string, parse_mode: string, entities: Array<MessageEntity>, link_preview_options: LinkPreviewOptions, reply_markup: InlineKeyboardMarkup}} config 
      * @returns {Promise<Message>|Promise<boolean>}
      */
-    async editMessageText(config){
-        let params = App.HTTP({method: "editMessageText", params: config});
+    async editMessageText(config) {
+        let params = App.HTTP({ method: "editMessageText", params: config });
         const response = await fetch(this.endpoint, params);
-        if (!response.ok){
+        if (!response.ok) {
             console.error(`Failed to edit message text:`, await response.text());
             return false;
         }
         const message = await response.json();
-        if (message.result instanceof Boolean){
+        if (message.result instanceof Boolean) {
             return message.result;
         }
         return new Message(message.result);
@@ -852,10 +930,10 @@ class Bot {
      * @param {{business_connection_id: string, chat_id: string|number, message_id: number, disable_notification: boolean}} config 
      * @returns {Promise<boolean>}
      */
-    async pinChatMessage(config){
-        let params = App.HTTP({method: "pinChatMessage", params: config});
+    async pinChatMessage(config) {
+        let params = App.HTTP({ method: "pinChatMessage", params: config });
         const response = await fetch(this.endpoint, params);
-        if (!response.ok){
+        if (!response.ok) {
             console.error(`Failed to pin message:`, await response.text());
             return false;
         }
@@ -868,10 +946,10 @@ class Bot {
      * @param {{business_connection_id: string, chat_id: string|number, message_id: number}} config 
      * @returns {Promise<boolean>}
      */
-    async unpinChatMessage(config){
-        let params = App.HTTP({method: "unpinChatMessage", params: config});
+    async unpinChatMessage(config) {
+        let params = App.HTTP({ method: "unpinChatMessage", params: config });
         const response = await fetch(this.endpoint, params);
-        if (!response.ok){
+        if (!response.ok) {
             console.error(`Failed to unpin message:`, await response.text());
             return false;
         }
@@ -879,16 +957,16 @@ class Bot {
         return message.result;
     }
 
-    
+
     /**
      * Use this method to clear the list of pinned messages in a chat. In private chats and channel direct messages chats, no additional rights are required to unpin all pinned messages. Conversely, the bot must be an administrator with the 'can_pin_messages' right or the 'can_edit_messages' right to unpin all pinned messages in groups and channels respectively. Returns True on success.
      * @param {{chat_id: string|number}} config 
      * @returns {Promise<boolean>}
      */
-    async unpinAllChatMessages(config){
-        let params = App.HTTP({method: "unpinAllChatMessages", params: config});
+    async unpinAllChatMessages(config) {
+        let params = App.HTTP({ method: "unpinAllChatMessages", params: config });
         const response = await fetch(this.endpoint, params);
-        if (!response.ok){
+        if (!response.ok) {
             console.error(`Failed to unpin all messages:`, await response.text());
             return false;
         }
@@ -901,11 +979,11 @@ class Bot {
      * @param {{chat_id: string|number, message_id: number, inline_message_id: string, media: InputMediaAnimation|InputMediaAudio|InputMediaDocument|InputMediaPhoto|InputMediaVideo, reply_markup: InlineKeyboardMarkup}} config 
      * @returns {Promise<Message>|Promise<boolean>}
      */
-    async editMessageMedia(config){
-        let params = App.HTTP({method: "editMessageMedia", params: config});
+    async editMessageMedia(config) {
+        let params = App.HTTP({ method: "editMessageMedia", params: config });
         const response = await fetch(this.endpoint, params)
-        .then(resp => resp.json());
-        if (response.result instanceof Boolean){
+            .then(resp => resp.json());
+        if (response.result instanceof Boolean) {
             return response.result;
         }
         return new Message(response.result);
@@ -916,10 +994,10 @@ class Bot {
      * @param {{chat_id: number|string, message_thread_id: number, action: string}} config 
      * @returns {Promise<boolean>}
      */
-    async sendChatAction(config){
-        let params = App.HTTP({method: "sendChatAction", params: config});
+    async sendChatAction(config) {
+        let params = App.HTTP({ method: "sendChatAction", params: config });
         const response = await fetch(this.endpoint, params)
-        .then(resp => resp.json());
+            .then(resp => resp.json());
         return response.result;
     }
 
@@ -928,10 +1006,10 @@ class Bot {
      * @param {{chat_id: string|number, message_thread_id: number, media: Array<InputMediaAudio>|Array<InputMediaDocument>|Array<InputMediaPhoto>|Array<InputMediaVideo>, disable_notification: boolean, protect_content: boolean, message_effect_id: string, reply_parameters: ReplyParameters}} config 
      * @returns {Promise<Message>}
      */
-    async sendMediaGroup(config){
+    async sendMediaGroup(config) {
         const formdata = new FormData();
-        
-        for (const [key, val] of Object.entries({...config, ...App.defaultParams})){
+
+        for (const [key, val] of Object.entries({ ...config, ...App.defaultParams })) {
             if (key == "media") continue;
             formdata.append(key, val);
         }
@@ -940,18 +1018,18 @@ class Bot {
 
         formdata.append("media", JSON.stringify(media));
 
-        for (const item of media){
+        for (const item of media) {
             const filepath = item.path;
             const filename = item.media.replace("attach://", "");
             const blob = await fs.openAsBlob(filepath);
             formdata.append(filename, blob);
         }
 
-        const params = App.HTTP({params: formdata});
+        const params = App.HTTP({ params: formdata });
         const response = await fetch(this.endpoint + "sendMediaGroup", params)
-        .then(resp => resp.json());
+            .then(resp => resp.json());
 
-        if (!response.result){
+        if (!response.result) {
             throw new Error(`Error sending media group: ${JSON.stringify(response, null, 2)}`);
         }
 
@@ -966,10 +1044,10 @@ class Bot {
      * @param {{file_id: string}} config 
      * @returns {Promise<_File>}
      */
-    async getFile(config){
-        let params = App.HTTP({method: "getFile", params: config});
+    async getFile(config) {
+        let params = App.HTTP({ method: "getFile", params: config });
         const response = await fetch(this.endpoint, params)
-        .then(resp => resp.json());
+            .then(resp => resp.json());
         return new _File(response.result);
     }
 
@@ -978,18 +1056,18 @@ class Bot {
      * @param {{chat_id: number|string, document: InputFile|string, thumbnail: InputFile|string, caption:string, parse_mode: string, disable_content_type_detection:boolean, disable_notification: boolean, protect_content: boolean, message_effect_id: string, reply_parameters: ReplyParameters, reply_markup: InlineKeyboardMarkup}} config 
      * @returns {Promise<Message>}
      */
-    async sendDocument(config){
+    async sendDocument(config) {
         const formdata = new FormData();
-        for (const [key, val] of Object.entries({...config, ...App.defaultParams})){
+        for (const [key, val] of Object.entries({ ...config, ...App.defaultParams })) {
             if (key == "document") continue;
             formdata.append(key, val);
         }
 
         formdata.append("document", config.document, "Archive.zip");
 
-        let params = App.HTTP({params: formdata});
+        let params = App.HTTP({ params: formdata });
         const response = await fetch(this.endpoint + "sendDocument", params)
-        .then(resp => resp.json());
+            .then(resp => resp.json());
         return new Message(response.result);
     }
 
@@ -998,28 +1076,28 @@ class Bot {
      * @param {{chat_id: string|number, user_id: number}} config 
      * @returns {Promise<ChatMemberMember>|Promise<ChatMemberRestricted>|Promise<ChatMemberBanned>|Promise<ChatMemberOwner>|Promise<ChatMemberAdministrator>|Promise<ChatMemberLeft>}
      */
-    async getChatMember(config){
-        let params = App.HTTP({method: "getChatMember", params: config});
+    async getChatMember(config) {
+        let params = App.HTTP({ method: "getChatMember", params: config });
         const response = await fetch(this.endpoint, params);
 
-        if (!response.ok){
+        if (!response.ok) {
             console.error(await response.text());
             return null;
         }
         const resp = await response.json();
         return new ChatMember(resp.result);
     }
-    
+
     /**
      * Use this method to get a list of administrators in a chat, which aren't bots. Returns an Array of ChatMember objects.
      * @param {{chat_id: number}} config 
      * @returns {Promise<Array<ChatMember>>}
      */
-    async getChatAdministrators(config){
-        let params = App.HTTP({method: "getChatAdministrators", params: config});
+    async getChatAdministrators(config) {
+        let params = App.HTTP({ method: "getChatAdministrators", params: config });
         const response = await fetch(this.endpoint, params);
 
-        if (!response.ok){
+        if (!response.ok) {
             console.error(await response.text());
             return null;
         }
@@ -1032,7 +1110,7 @@ class Bot {
      * @param {string|number} chat_id Unique identifier for the target chat or username of the target supergroup or channel (in the format `@channelusername`).
      * @returns {Promise<ChatFullInfo>|Promise<null>}
      */
-    async getChat(chat_id){
+    async getChat(chat_id) {
         const response = await fetch(this.endpoint + "getChat", {
             method: "POST",
             headers: {
@@ -1042,8 +1120,8 @@ class Bot {
                 chat_id: chat_id
             })
         });
-        
-        if (!response.ok){
+
+        if (!response.ok) {
             console.error("Error:", await response.text());
             return null;
         }
@@ -1067,8 +1145,8 @@ class Bot {
                 chat_id: chat_id
             })
         });
-        
-        if (!response.ok){
+
+        if (!response.ok) {
             console.error("Error:", await response.text());
             return null;
         }
@@ -1081,11 +1159,11 @@ class Bot {
      * Use this method to restrict a user in a supergroup. The bot must be an administrator in the supergroup for this to work and must have the appropriate administrator rights. Pass True for all permissions to lift restrictions from a user. Returns True on success.
      * @param {{chat_id: number|string, user_id: number, permissions: ChatPermissions, use_independent_chat_permissions: boolean, until_date: number}} config 
      */
-    async restrictChatMember(config){
-        let params = App.HTTP({method: "restrictChatMember", params: config});
+    async restrictChatMember(config) {
+        let params = App.HTTP({ method: "restrictChatMember", params: config });
         const response = await fetch(this.endpoint, params);
-        
-        if (!response.ok){
+
+        if (!response.ok) {
             console.error("Error:", await response.text());
             return null;
         }
@@ -1099,11 +1177,11 @@ class Bot {
      * @param {{chat_id: number|string, message_thread_id: number, from_chat_id: number|string, disable_notification: boolean, protect_content: boolean, message_id: number}} config 
      * @returns {Promise<Message>}
      */
-    async forwardMessage(config){
-        let params = App.HTTP({method: "forwardMessage", params: config});
+    async forwardMessage(config) {
+        let params = App.HTTP({ method: "forwardMessage", params: config });
         const response = await fetch(this.endpoint, params);
-        
-        if (!response.ok){
+
+        if (!response.ok) {
             console.error("Error:", await response.text());
             return null;
         }
@@ -1117,17 +1195,17 @@ class Bot {
      * @param {{chat_id: number|string, message_thread_id: number, from_chat_id: number|string, disable_notification: boolean, protect_content: boolean, message_ids: number[]}} config 
      * @returns {Promise<MessageId[]>}
      */
-    async forwardMessages(config){
+    async forwardMessages(config) {
 
-        if (config.message_ids.length > 100 || config.message_ids.length < 1){
+        if (config.message_ids.length > 100 || config.message_ids.length < 1) {
             console.error("The array of message ids must be between 1 and 100.");
             return null;
         }
 
-        let params = App.HTTP({method: "forwardMessages", params: config});
+        let params = App.HTTP({ method: "forwardMessages", params: config });
         const response = await fetch(this.endpoint, params);
-        
-        if (!response.ok){
+
+        if (!response.ok) {
             console.error("Error:", await response.text());
             return null;
         }
@@ -1141,11 +1219,11 @@ class Bot {
      * @param {{user_id: number, limit: number, offset: number}} config 
      * @returns {Promise<UserProfilePhotos>}
      */
-    async getUserProfilePhotos(config){
-        let params = App.HTTP({method: "getUserProfilePhotos", params: config});
+    async getUserProfilePhotos(config) {
+        let params = App.HTTP({ method: "getUserProfilePhotos", params: config });
         const response = await fetch(this.endpoint, params);
-        
-        if (!response.ok){
+
+        if (!response.ok) {
             console.error("Error:", await response.text());
             return null;
         }
@@ -1160,10 +1238,10 @@ class Bot {
      * @returns {Promise<string>}
      */
     async exportChatInviteLink(config) {
-        let params = App.HTTP({method: "exportChatInviteLink", params: config});
+        let params = App.HTTP({ method: "exportChatInviteLink", params: config });
         const response = await fetch(this.endpoint, params);
-        
-        if (!response.ok){
+
+        if (!response.ok) {
             console.error("Error:", await response.text());
             return null;
         }
@@ -1178,10 +1256,10 @@ class Bot {
      * @returns {Promise<ChatInviteLink>}
      */
     async createChatInviteLink(config) {
-        let params = App.HTTP({method: "createChatInviteLink", params: config});
+        let params = App.HTTP({ method: "createChatInviteLink", params: config });
         const response = await fetch(this.endpoint, params);
-        
-        if (!response.ok){
+
+        if (!response.ok) {
             console.error("Error:", await response.text());
             return null;
         }
@@ -1196,10 +1274,10 @@ class Bot {
      * @returns {Promise<ChatInviteLink>}
      */
     async revokeChatInviteLink(config) {
-        let params = App.HTTP({method: "revokeChatInviteLink", params: config});
+        let params = App.HTTP({ method: "revokeChatInviteLink", params: config });
         const response = await fetch(this.endpoint, params);
-        
-        if (!response.ok){
+
+        if (!response.ok) {
             console.error("Error:", await response.text());
             return null;
         }
@@ -1214,10 +1292,10 @@ class Bot {
      * @returns {Promise<ChatInviteLink>}
      */
     async editChatInviteLink(config) {
-        let params = App.HTTP({method: "editChatInviteLink", params: config});
+        let params = App.HTTP({ method: "editChatInviteLink", params: config });
         const response = await fetch(this.endpoint, params);
-        
-        if (!response.ok){
+
+        if (!response.ok) {
             console.error("Error:", await response.text());
             return null;
         }
@@ -1232,10 +1310,10 @@ class Bot {
      * @returns {Promise<boolean>}
      */
     async approveChatJoinRequest(config) {
-        let params = App.HTTP({method: "approveChatJoinRequest", params: config});
+        let params = App.HTTP({ method: "approveChatJoinRequest", params: config });
         const response = await fetch(this.endpoint, params);
-        
-        if (!response.ok){
+
+        if (!response.ok) {
             console.error("Error:", await response.text());
             return false;
         }
@@ -1250,10 +1328,10 @@ class Bot {
      * @returns {Promise<boolean>}
      */
     async declineChatJoinRequest(config) {
-        let params = App.HTTP({method: "declineChatJoinRequest", params: config});
+        let params = App.HTTP({ method: "declineChatJoinRequest", params: config });
         const response = await fetch(this.endpoint, params);
-        
-        if (!response.ok){
+
+        if (!response.ok) {
             console.error("Error:", await response.text());
             return false;
         }
@@ -1274,10 +1352,10 @@ class Bot {
             return false;
         }
 
-        let params = App.HTTP({method: "setChatMemberTag", params: config});
+        let params = App.HTTP({ method: "setChatMemberTag", params: config });
         const response = await fetch(this.endpoint, params);
-        
-        if (!response.ok){
+
+        if (!response.ok) {
             console.error("Error:", await response.text());
             return false;
         }

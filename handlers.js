@@ -1,6 +1,6 @@
 import {Update, Context} from "./base.js";
 import { Filters } from "./constants.js";
-import { getMessage, parseCommand } from "./utils.js";
+import { getMessage, isService, parseCommand } from "./utils.js";
 
 class BaseHandler {
     /**
@@ -18,9 +18,12 @@ class BaseHandler {
     }
 
     async handle (update, context){
-        if (await this.canHandle(update)){
-            return await this.callback(update, context);
+        if (!(await this.canHandle(update))) {
+            return false;
         }
+
+        await this.callback(update, context);
+        return true;
     }
 }
 
@@ -35,11 +38,8 @@ class CommandHandler extends BaseHandler {
     constructor (command, callback){
         super((update) => {
             const message = getMessage(update);
-            return (
-                message && 
-                typeof message.text === "string" && 
-                message.text.startsWith(`/${command}`)
-            )
+            const cmd = message?.text.split(/\s+/)[0]?.split("@")[0];
+            return cmd === `/${command}`;
         }, callback);
     }
 
@@ -49,13 +49,21 @@ class CommandHandler extends BaseHandler {
      * @param {Context} context 
      */
     async handle(update, context) {
-        if (await this.canHandle(update)) {
-            const message = getMessage(update);
-            const args = parseCommand(message.text);
-            context.args = args;
-            
-            return await this.callback(update, context);
+        if (!(await this.canHandle(update))) {
+            return false;
         }
+
+        const message = getMessage(update);
+
+        if (!message?.text) {
+            return false;
+        }
+
+        const args = parseCommand(message.text);
+        context.args = args;
+        await this.callback(update, context);
+
+        return true;
     }
 }
 
@@ -116,7 +124,7 @@ class MessageHandler extends BaseHandler {
                 flags |= Filters.LEFT_CHAT_MEMBER;
             }
 
-            if (message.new_chat_members?.length || message.left_chat_member || message.chat_owner_left || message.chat_owner_changed || message.new_chat_title || message.new_chat_photo || message.delete_chat_photo || message.group_chat_created || message.supergroup_chat_created || message.channel_chat_created || message.message_auto_delete_timer_changed || message.users_shared || message.chat_shared || message.boost_added || message.chat_background_set || message.forum_topic_created || message.forum_topic_edited || message.forum_topic_closed || message.forum_topic_reopened || message.general_forum_topic_hidden || message.general_forum_topic_unhidden || message.giveaway_created || message.giveaway_completed || message.video_chat_scheduled || message.video_chat_started || message.video_chat_ended || message.video_chat_participants_invited) {
+            if (isService(message)) {
                 flags |= Filters.SERVICE_MESSAGES;
             }
 
@@ -157,7 +165,8 @@ class ConversationHandler {
     }
 
     async handle(update, context){
-        const chat_id = update.message?.chat.id || update.callback_query?.message?.chat.id;
+        const chat_id = update.message?.chat?.id ?? update.callback_query?.message?.chat?.id;
+        if (chat_id === null) return false;
         if (this.activeConversations.has(chat_id)){
             const state = this.activeConversations.get(chat_id);
             if (this.states[state]) {
@@ -218,12 +227,6 @@ class CallbackQueryHandler extends BaseHandler {
     constructor (callback){
         super((update) => update.type === "callback_query" && update?.callback_query && typeof update.callback_query === "object", callback);
     }
-
-    async handle(update, context) {
-        if (await this.canHandle(update)) {
-            return await this.callback(update, context);
-        }
-    }
 }
 
 // /**
@@ -258,6 +261,8 @@ class ChatMemberHandler extends BaseHandler {
                     (update.my_chat_member?.old_chat_member || update.my_chat_member?.new_chat_member)
                 )
             }
+
+            return false;
         }, callback);
     }
 }

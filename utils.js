@@ -1,6 +1,6 @@
 /* Functions that are not inherently part of Telegram bots. These are used for convenience. */
 // import { Update, Context } from "./base.js";
-import { Permissions } from "./constants.js";
+import { Permissions, SERVICE_FIELDS } from "./constants.js";
 
 function filterObject(obj){
     return Object.fromEntries(
@@ -76,10 +76,19 @@ function parseCommand(input) {
     return args;
 }
 
+function isService(message) {
+    if (message.new_chat_members?.length) {
+        return true;
+    }
+
+    return SERVICE_FIELDS.some(field => message[field]);
+}
+
 export {
     filterObject,
     accessControl,
     denyAccess,
     parseCommand,
-    getMessage
+    getMessage,
+    isService
 }
