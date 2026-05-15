@@ -383,7 +383,7 @@ class App {
      * Add an update handler.
      * @param {BaseHandler} handler
      * @param {Permissions} permissions
-     * @param {ChatScope} scope
+     * @param {number} scope
      */
     addHandler(handler, permissions = Permissions.MEMBER, scope = ChatScope.ALL) {
         handler.requiredPermissions = permissions;
