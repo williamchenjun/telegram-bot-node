@@ -4,7 +4,7 @@ import fs from "fs";
 import { FormData } from "node-fetch";
 import fetch from "node-fetch";
 import express from "express";
-import { Permissions, UpdateType } from "./constants.js";
+import {ChatScope, Permissions, UpdateType} from "./constants.js";
 import { Queue, Schedule } from "./extra.js";
 import path from "path";
 import { fileURLToPath } from 'url';
@@ -381,10 +381,13 @@ class App {
 
     /**
      * Add an update handler.
-     * @param {BaseHandler} handler 
+     * @param {BaseHandler} handler
+     * @param {Permissions} permissions
+     * @param {ChatScope} scope
      */
-    addHandler(handler, permissions = Permissions.MEMBER) {
+    addHandler(handler, permissions = Permissions.MEMBER, scope = ChatScope.ALL) {
         handler.requiredPermissions = permissions;
+        handler.scope = scope;
 
         if (handler instanceof ConversationHandler && !this.handlers.conversation) {
             this.handlers.conversation = handler;
@@ -415,9 +418,36 @@ class App {
         return this;
     }
 
+    getUpdateScope(update) {
+        const type = update.effective_chat.type;
+
+        switch (type) {
+            case "private":
+                return ChatScope.PRIVATE;
+
+            case "group":
+                return ChatScope.GROUP;
+
+            case "supergroup":
+                return ChatScope.SUPERGROUP;
+
+            case "channel":
+                return ChatScope.CHANNEL;
+
+            default:
+                return 0;
+        }
+    }
+
     async dispatchHandlers(handlers, update, context, stopOnHandled = true) {
+        const currentScope = this.getUpdateScope(update);
+
         for (const handler of handlers) {
             try {
+                if (handler.scope && currentScope === 0) {
+                    continue;
+                }
+
                 const allowed = await this.checkPermissions(
                     update,
                     context,

@@ -267,6 +267,21 @@ const SERVICE_FIELDS = [
     "video_chat_participants_invited"
 ];
 
+/**
+ * Represents the scope.
+ * @type {{PRIVATE, GROUP, SUPERGROUP, CHANNEL, ALL}}
+ */
+const ChatScope = {
+    PRIVATE: 1 << 0,
+    GROUP: 1 << 1,
+    SUPERGROUP: 1 << 2,
+    CHANNEL: 1 << 3,
+
+    GROUPS: (1 << 1) | (1 << 2),
+
+    ALL: (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3)
+}
+
 export {
     ChatAction,
     ParseMode,
@@ -274,5 +289,6 @@ export {
     Filters,
     Permissions,
     UpdateType,
-    SERVICE_FIELDS
+    SERVICE_FIELDS,
+    ChatScope,
 }
