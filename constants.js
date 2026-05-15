@@ -6,7 +6,7 @@ const Permissions = {
   MEMBER: 1 << 0,
   ADMIN:  1 << 1,
   OWNER:  1 << 2,
-  ALL:    (1 << 0) | (1 << 1) | (1 << 2),
+  ALL:    1 << 3,
 };
 
 /**

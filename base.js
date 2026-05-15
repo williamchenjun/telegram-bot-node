@@ -526,7 +526,7 @@ class App {
         const chatId = update.effective_chat?.id;
 
         // Every user starts as MEMBER.
-        let userPermissions = Permissions.MEMBER;
+        let userPermissions = Permissions.ALL;
 
         try {
 
@@ -536,23 +536,21 @@ class App {
 
             const member = admins?.find(a => a.user?.id === userId);
 
-            // Owner permissions:
-            // OWNER + ADMIN + MEMBER
             if (member?.status === "creator") {
 
                 userPermissions |= Permissions.OWNER;
                 userPermissions |= Permissions.ADMIN;
             }
-
-            // Admin permissions:
-            // ADMIN + MEMBER
             else if (member?.status === "administrator") {
 
                 userPermissions |= Permissions.ADMIN;
             }
+            else {
+
+                userPermissions |= Permissions.MEMBER;
+            }
 
         } catch (error) {
-
             console.error(
                 "getChatAdministrators failed:",
                 error
