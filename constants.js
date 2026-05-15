@@ -2,11 +2,12 @@
  * User interaction permissions levels.
  */
 const Permissions = {
-  NONE: 0,
-  MEMBER: 1 << 0,
-  ADMIN:  1 << 1,
-  OWNER:  1 << 2,
-  ALL:    1 << 3,
+    NONE: 0,
+    MEMBER: 1 << 0,
+    ADMIN:  1 << 1,
+    OWNER:  1 << 2,
+    RESTRICTED: 1 << 3,
+    ALL:    (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3)
 };
 
 /**

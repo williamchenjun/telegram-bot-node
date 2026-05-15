@@ -444,6 +444,13 @@ class App {
 
         for (const handler of handlers) {
             try {
+                console.log({
+                    handler: handler.constructor.name,
+                    scope: handler.scope,
+                    currentScope,
+                    allowed:
+                        (handler.scope & currentScope) !== 0
+                });
                 if ((handler.scope & currentScope) === 0) {
                     continue;
                 }
@@ -549,6 +556,14 @@ class App {
      */
     async checkPermissions(update, context, requiredPermissions) {
 
+        // EVERYONE
+        if (
+            requiredPermissions ===
+            Permissions.ALL
+        ) {
+            return true;
+        }
+
         const hasAllPerms = (userPerms, requiredPerms) =>
             (userPerms & requiredPerms) === requiredPerms;
 
@@ -556,35 +571,51 @@ class App {
         const chatId = update.effective_chat?.id;
 
         // Every user starts as MEMBER.
-        let userPermissions = Permissions.ALL;
+        let userPermissions = Permissions.NONE;
 
-        try {
-
-            const admins = await context.bot.getChatAdministrators({
-                chat_id: chatId
+        const member =
+            await context.bot.getChatMember({
+                chat_id: chatId,
+                user_id: userId
             });
 
-            const member = admins?.find(a => a.user?.id === userId);
+        switch (member?.status) {
 
-            if (member?.status === "creator") {
+            case "creator":
 
-                userPermissions |= Permissions.OWNER;
-                userPermissions |= Permissions.ADMIN;
-            }
-            else if (member?.status === "administrator") {
+                userPermissions =
+                    Permissions.OWNER |
+                    Permissions.ADMIN |
+                    Permissions.MEMBER;
 
-                userPermissions |= Permissions.ADMIN;
-            }
-            else {
+                break;
 
-                userPermissions |= Permissions.MEMBER;
-            }
+            case "administrator":
 
-        } catch (error) {
-            console.error(
-                "getChatAdministrators failed:",
-                error
-            );
+                userPermissions =
+                    Permissions.ADMIN |
+                    Permissions.MEMBER;
+
+                break;
+
+            case "member":
+
+                userPermissions =
+                    Permissions.MEMBER;
+
+                break;
+
+            case "restricted":
+
+                userPermissions =
+                    Permissions.RESTRICTED;
+
+                break;
+
+            default:
+
+                userPermissions =
+                    Permissions.NONE;
         }
 
         return hasAllPerms(
