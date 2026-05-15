@@ -444,13 +444,7 @@ class App {
 
         for (const handler of handlers) {
             try {
-                console.log({
-                    handler: handler.constructor.name,
-                    scope: handler.scope,
-                    currentScope,
-                    allowed:
-                        (handler.scope & currentScope) !== 0
-                });
+
                 if ((handler.scope & currentScope) === 0) {
                     continue;
                 }
