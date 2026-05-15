@@ -444,7 +444,7 @@ class App {
 
         for (const handler of handlers) {
             try {
-                if ((handler.scope && currentScope) === 0) {
+                if ((handler.scope & currentScope) === 0) {
                     continue;
                 }
 
