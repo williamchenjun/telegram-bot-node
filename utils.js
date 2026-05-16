@@ -56,7 +56,7 @@ async function denyAccess(update, reason) {
 }
 
 function parseCommand(input) {
-    const commandRegex = /^\/(\S+)(?:\s+(.*))?$/;
+    const commandRegex = /^\/(\S+)(?:\s+([\s\S]*))?$/;
     const match = input.match(commandRegex);
     if (!match) return [];
     const argsPart = match[2] || '';
