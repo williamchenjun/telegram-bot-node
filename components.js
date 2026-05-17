@@ -1243,6 +1243,11 @@ class Message{
             ? new VideoChatParticipantsInvited(this.message.video_chat_participants_invited)
             : null;
     }
+    /**
+     * Optional. Specified message was pinned. Note that the Message object in this field will not contain further reply_to_message fields even if it itself is a reply.
+     * @returns {MaybeInaccessibleMessage}
+     */
+    get pinned_message(){return this.message?.pinned_message ? new MaybeInaccessibleMessage(this.message.pinned_message): null}
     // ===== USEFUL METHODS =====
 
     /**
