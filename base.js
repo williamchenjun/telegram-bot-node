@@ -384,9 +384,11 @@ class App {
      * @param {BaseHandler} handler
      * @param {Permissions} permissions
      * @param {number} scope
+     * @param {string} mode
      */
-    addHandler(handler, permissions = Permissions.MEMBER, scope = ChatScope.ALL) {
+    addHandler(handler, permissions = Permissions.MEMBER, scope = ChatScope.ALL, mode = PermissionsMode.ALL) {
         handler.requiredPermissions = permissions;
+        handler.mode = mode;
         handler.scope = scope;
 
         if (handler instanceof ConversationHandler && !this.handlers.conversation) {
@@ -452,7 +454,8 @@ class App {
                 const allowed = await this.checkPermissions(
                     update,
                     context,
-                    handler.requiredPermissions
+                    handler.requiredPermissions,
+                    handler.mode
                 );
 
                 if (!allowed) {
