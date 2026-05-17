@@ -549,73 +549,34 @@ class App {
      * @returns {Promise<boolean>}
      */
     async checkPermissions(update, context, requiredPermissions) {
-
-        // EVERYONE
-        if (
-            requiredPermissions ===
-            Permissions.ALL
-        ) {
+        if (requiredPermissions === Permissions.ALL) {
             return true;
         }
 
-        const hasAllPerms = (userPerms, requiredPerms) =>
-            (userPerms & requiredPerms) === requiredPerms;
-
+        const hasPerms = (userPerms, requiredPerms) => (userPerms & requiredPerms) !== 0;
         const userId = update.effective_user?.id;
         const chatId = update.effective_chat?.id;
-
-        // Every user starts as MEMBER.
         let userPermissions = Permissions.NONE;
-
-        const member =
-            await context.bot.getChatMember({
-                chat_id: chatId,
-                user_id: userId
-            });
+        const member = await context.bot.getChatMember({chat_id: chatId, user_id: userId});
 
         switch (member?.status) {
-
             case "creator":
-
-                userPermissions =
-                    Permissions.OWNER |
-                    Permissions.ADMIN |
-                    Permissions.MEMBER;
-
+                userPermissions = Permissions.OWNER;
                 break;
-
             case "administrator":
-
-                userPermissions =
-                    Permissions.ADMIN |
-                    Permissions.MEMBER;
-
+                userPermissions = Permissions.ADMIN;
                 break;
-
             case "member":
-
-                userPermissions =
-                    Permissions.MEMBER;
-
+                userPermissions = Permissions.MEMBER;
                 break;
-
             case "restricted":
-
-                userPermissions =
-                    Permissions.RESTRICTED;
-
+                userPermissions = Permissions.RESTRICTED;
                 break;
-
             default:
-
-                userPermissions =
-                    Permissions.NONE;
+                userPermissions = Permissions.NONE;
         }
 
-        return hasAllPerms(
-            userPermissions,
-            requiredPermissions
-        );
+        return hasPerms(userPermissions, requiredPermissions);
     }
 
     /**
