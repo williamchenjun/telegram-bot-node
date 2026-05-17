@@ -4,7 +4,7 @@ import fs from "fs";
 import { FormData } from "node-fetch";
 import fetch from "node-fetch";
 import express from "express";
-import {ChatScope, Permissions, UpdateType} from "./constants.js";
+import {ChatScope, Permissions, PermissionsMode, UpdateType} from "./constants.js";
 import { Queue, Schedule } from "./extra.js";
 import path from "path";
 import { fileURLToPath } from 'url';
@@ -546,9 +546,10 @@ class App {
      * @param {Update} update
      * @param {Context} context
      * @param {number} requiredPermissions
+     * @param {string} mode
      * @returns {Promise<boolean>}
      */
-    async checkPermissions(update, context, requiredPermissions) {
+    async checkPermissions(update, context, requiredPermissions, mode = PermissionsMode.ALL) {
 
         // EVERYONE
         if (
@@ -558,8 +559,21 @@ class App {
             return true;
         }
 
-        const hasAllPerms = (userPerms, requiredPerms) =>
-            (userPerms & requiredPerms) === requiredPerms;
+        const hasPermissions = (
+            userPerms,
+            requiredPerms,
+            mode = PermissionMode.ALL
+        ) => {
+
+            switch (mode) {
+                case PermissionMode.ANY:
+                    return (userPerms & requiredPerms) !== 0;
+
+                case PermissionMode.ALL:
+                default:
+                    return (userPerms & requiredPerms) === requiredPerms;
+            }
+        };
 
         const userId = update.effective_user?.id;
         const chatId = update.effective_chat?.id;
