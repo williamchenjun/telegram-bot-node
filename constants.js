@@ -262,6 +262,7 @@ const SERVICE_FIELDS = [
     "general_forum_topic_unhidden",
     "giveaway_created",
     "giveaway_completed",
+    "pinned_message",
     "video_chat_scheduled",
     "video_chat_started",
     "video_chat_ended",
