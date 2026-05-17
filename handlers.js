@@ -38,7 +38,7 @@ class CommandHandler extends BaseHandler {
     constructor (command, callback){
         super((update) => {
             const message = getMessage(update);
-            const cmd = message?.text.split(/\s+/)[0]?.split("@")[0];
+            const cmd = message?.text?.split(/\s+/)[0]?.split("@")[0];
             return cmd === `/${command}`;
         }, callback);
     }

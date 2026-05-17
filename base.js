@@ -553,6 +553,10 @@ class App {
             return true;
         }
 
+        if (update.effective_chat?.type === "channel") {
+            return true;
+        }
+
         const hasPerms = (userPerms, requiredPerms) => (userPerms & requiredPerms) !== 0;
         const userId = update.effective_user?.id;
         const chatId = update.effective_chat?.id;
