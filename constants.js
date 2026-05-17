@@ -10,11 +10,6 @@ const Permissions = {
     ALL:    (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3)
 };
 
-const PermissionsMode = {
-    ALL: "all",
-    ANY: "any"
-}
-
 /**
  * This object represents an incoming update.
  */
@@ -297,5 +292,4 @@ export {
     UpdateType,
     SERVICE_FIELDS,
     ChatScope,
-    PermissionsMode
 }

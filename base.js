@@ -4,7 +4,7 @@ import fs from "fs";
 import { FormData } from "node-fetch";
 import fetch from "node-fetch";
 import express from "express";
-import {ChatScope, Permissions, PermissionsMode, UpdateType} from "./constants.js";
+import {ChatScope, Permissions, UpdateType} from "./constants.js";
 import { Queue, Schedule } from "./extra.js";
 import path from "path";
 import { fileURLToPath } from 'url';
@@ -384,11 +384,9 @@ class App {
      * @param {BaseHandler} handler
      * @param {Permissions} permissions
      * @param {number} scope
-     * @param {string} mode
      */
-    addHandler(handler, permissions = Permissions.MEMBER, scope = ChatScope.ALL, mode = PermissionsMode.ALL) {
+    addHandler(handler, permissions = Permissions.MEMBER, scope = ChatScope.ALL) {
         handler.requiredPermissions = permissions;
-        handler.mode = mode;
         handler.scope = scope;
 
         if (handler instanceof ConversationHandler && !this.handlers.conversation) {
@@ -454,8 +452,7 @@ class App {
                 const allowed = await this.checkPermissions(
                     update,
                     context,
-                    handler.requiredPermissions,
-                    handler.mode
+                    handler.requiredPermissions
                 );
 
                 if (!allowed) {
@@ -549,10 +546,9 @@ class App {
      * @param {Update} update
      * @param {Context} context
      * @param {number} requiredPermissions
-     * @param {string} mode
      * @returns {Promise<boolean>}
      */
-    async checkPermissions(update, context, requiredPermissions, mode = PermissionsMode.ALL) {
+    async checkPermissions(update, context, requiredPermissions) {
 
         // EVERYONE
         if (
@@ -562,21 +558,8 @@ class App {
             return true;
         }
 
-        const hasPermissions = (
-            userPerms,
-            requiredPerms,
-            mode = PermissionsMode.ALL
-        ) => {
-
-            switch (mode) {
-                case PermissionsMode.ANY:
-                    return (userPerms & requiredPerms) !== 0;
-
-                case PermissionsMode.ALL:
-                default:
-                    return (userPerms & requiredPerms) === requiredPerms;
-            }
-        };
+        const hasAllPerms = (userPerms, requiredPerms) =>
+            (userPerms & requiredPerms) === requiredPerms;
 
         const userId = update.effective_user?.id;
         const chatId = update.effective_chat?.id;
@@ -629,10 +612,9 @@ class App {
                     Permissions.NONE;
         }
 
-        return hasPermissions(
+        return hasAllPerms(
             userPermissions,
-            requiredPermissions,
-            mode
+            requiredPermissions
         );
     }
 
