@@ -1955,7 +1955,19 @@ class Chat {
      * @returns {Promise<boolean>}
      */
     async deleteMessage(config) {
-        return await Context.bot.deleteMessage({chat_id: this.id, ...config})
+        return await Context.bot.deleteMessage({chat_id: this.id, ...config});
+    }
+
+    /**
+     * Use this method to edit text and game messages. On success, if the edited message is not an inline message, the edited `Message` is returned, otherwise `True` is returned. Note that business messages that were not sent by the bot and do not contain an inline keyboard can only be edited within 48 hours from the time they were sent.
+     * 
+     * Shortcut of `bot.editMessageText()`.
+     * 
+     * @param {{message_id: number, inline_message_id: string, text: string, parse_mode: string, entities: Array<MessageEntity>, link_preview_options: LinkPreviewOptions, reply_markup: InlineKeyboardMarkup}} config 
+     * @returns {Promise<Message>|Promise<boolean>}
+     */
+    async editMessageText(config) {
+        return await Context.bot.editMessageText({chat_id: this.id, ...config});
     }
 }
 
