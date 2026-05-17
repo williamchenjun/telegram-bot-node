@@ -629,9 +629,10 @@ class App {
                     Permissions.NONE;
         }
 
-        return hasAllPerms(
+        return hasPermissions(
             userPermissions,
-            requiredPermissions
+            requiredPermissions,
+            mode
         );
     }
 
