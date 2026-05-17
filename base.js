@@ -565,14 +565,14 @@ class App {
         const hasPermissions = (
             userPerms,
             requiredPerms,
-            mode = PermissionMode.ALL
+            mode = PermissionsMode.ALL
         ) => {
 
             switch (mode) {
-                case PermissionMode.ANY:
+                case PermissionsMode.ANY:
                     return (userPerms & requiredPerms) !== 0;
 
-                case PermissionMode.ALL:
+                case PermissionsMode.ALL:
                 default:
                     return (userPerms & requiredPerms) === requiredPerms;
             }
