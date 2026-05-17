@@ -628,8 +628,9 @@ class App {
             let handlers = [];
 
             switch (update.type) {
+                case "channel_post":
                 case "message": {
-                    const text = update.message?.text;
+                    const text = update.effective_message?.text;
 
                     await this.dispatchHandlers(
                         this.handlers.message,
