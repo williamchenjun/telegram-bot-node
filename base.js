@@ -155,54 +155,173 @@ class Update {
      */
     get callback_query() { return this.update.hasOwnProperty("callback_query") ? new CallbackQuery(this.update.callback_query) : null; }
     /**
-     * @returns {Chat} The effective chat the update comes from.
+     * @returns {Chat|null} The effective chat the update comes from.
      */
     get effective_chat() {
+        // Regular message
         if (this.update?.message) {
-            let message = new Message(this.update.message);
-            return message.chat;
-        } else if (this.update?.callback_query) {
-            let message = new Message(this.update.callback_query.message);
-            return message.chat;
-        } else if (this.update?.chat_member) {
-            return new Chat(this.update.chat_member.chat);
-        } else if (this.update?.my_chat_member) {
-            return new Chat(this.update.my_chat_member.chat);
-        } else if (this.update?.channel_post) {
-            let message = new Message(this.update.channel_post);
-            return message.chat;
+            return new Message(this.update.message).chat;
         }
+
+        // Edited message
+        if (this.update?.edited_message) {
+            return new Message(this.update.edited_message).chat;
+        }
+
+        // Callback query
+        if (this.update?.callback_query?.message) {
+            return new Message(this.update.callback_query.message).chat;
+        }
+
+        // Channel post
+        if (this.update?.channel_post) {
+            return new Message(this.update.channel_post).chat;
+        }
+
+        // Edited channel post
+        if (this.update?.edited_channel_post) {
+            return new Message(this.update.edited_channel_post).chat;
+        }
+
+        // Chat member updates
+        if (this.update?.chat_member?.chat) {
+            return new Chat(this.update.chat_member.chat);
+        }
+
+        // Bot membership updates
+        if (this.update?.my_chat_member?.chat) {
+            return new Chat(this.update.my_chat_member.chat);
+        }
+
+        // Chat join requests
+        if (this.update?.chat_join_request?.chat) {
+            return new Chat(this.update.chat_join_request.chat);
+        }
+
+        // Business messages
+        if (this.update?.business_message) {
+            return new Message(this.update.business_message).chat;
+        }
+
+        // Edited business messages
+        if (this.update?.edited_business_message) {
+            return new Message(this.update.edited_business_message).chat;
+        }
+
+        // Deleted business messages
+        if (this.update?.deleted_business_messages?.chat) {
+            return new Chat(this.update.deleted_business_messages.chat);
+        }
+
+        return null;
     }
     /**
-     * @returns {User} The effective user the update comes from.
+     * @returns {User|null} The effective user the update comes from.
      */
     get effective_user() {
-        if (this.update.hasOwnProperty("message")) {
-            let message = new Message(this.update.message);
-            let chat_id = message.chat.id;
-            Context.botData.set("effective_user_chat_id", chat_id);
-            return message.from;
-        } else if (this.update.hasOwnProperty("callback_query")) {
-            let user = new User(this.update.callback_query.from);
-            return user;
-        } else if (this.update?.chat_member) {
+        // Message
+        if (this.update?.message?.from) {
+            return new User(this.update.message.from);
+        }
+
+        // Edited message
+        if (this.update?.edited_message?.from) {
+            return new User(this.update.edited_message.from);
+        }
+
+        // Callback query
+        if (this.update?.callback_query?.from) {
+            return new User(this.update.callback_query.from);
+        }
+
+        // Inline query
+        if (this.update?.inline_query?.from) {
+            return new User(this.update.inline_query.from);
+        }
+
+        // Chosen inline result
+        if (this.update?.chosen_inline_result?.from) {
+            return new User(this.update.chosen_inline_result.from);
+        }
+
+        // Chat member update actor
+        if (this.update?.chat_member?.from) {
             return new User(this.update.chat_member.from);
         }
+
+        // Bot membership update actor
+        if (this.update?.my_chat_member?.from) {
+            return new User(this.update.my_chat_member.from);
+        }
+
+        // Join request
+        if (this.update?.chat_join_request?.from) {
+            return new User(this.update.chat_join_request.from);
+        }
+
+        // Channel post author
+        if (this.update?.channel_post?.from) {
+            return new User(this.update.channel_post.from);
+        }
+
+        // Edited channel post author
+        if (this.update?.edited_channel_post?.from) {
+            return new User(this.update.edited_channel_post.from);
+        }
+
+        // Business message
+        if (this.update?.business_message?.from) {
+            return new User(this.update.business_message.from);
+        }
+
+        // Edited business message
+        if (this.update?.edited_business_message?.from) {
+            return new User(this.update.edited_business_message.from);
+        }
+
+        return null;
     }
+
     /**
-     * @returns {Message} The effective message that is sent.
+     * @returns {Message|null} The effective message associated with the update.
      */
     get effective_message() {
-        if (this.update.hasOwnProperty("message")) {
-            let message = new Message(this.update.message);
-            return message;
-        } else if (this.update.hasOwnProperty("callback_query")) {
-            let message = new Message(this.update.callback_query.message);
-            return message;
-        } else if (this.update?.channel_post) {
-            let message = new Message(this.update.channel_post);
-            return message;
+        // Regular message
+        if (this.update?.message) {
+            return new Message(this.update.message);
         }
+
+        // Edited message
+        if (this.update?.edited_message) {
+            return new Message(this.update.edited_message);
+        }
+
+        // Callback query message
+        if (this.update?.callback_query?.message) {
+            return new Message(this.update.callback_query.message);
+        }
+
+        // Channel post
+        if (this.update?.channel_post) {
+            return new Message(this.update.channel_post);
+        }
+
+        // Edited channel post
+        if (this.update?.edited_channel_post) {
+            return new Message(this.update.edited_channel_post);
+        }
+
+        // Business message
+        if (this.update?.business_message) {
+            return new Message(this.update.business_message);
+        }
+
+        // Edited business message
+        if (this.update?.edited_business_message) {
+            return new Message(this.update.edited_business_message);
+        }
+
+        return null;
     }
 
     /**
@@ -427,7 +546,7 @@ class App {
     }
 
     getUpdateScope(update) {
-        const type = update.effective_chat.type;
+        const type = update.effective_chat?.type;
 
         switch (type) {
             case "private":
