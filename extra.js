@@ -90,7 +90,7 @@ class Queue {
         if (this.standby.length === 0) return;
         if (index < 0 || index >= this.standby.length) return;
 
-        const task = this.standby[index];
+        const task = this.standby.splice(index, 1)[0];
         this.queue.push(task);
         console.log("Standby task pushed to main queue...");
         return this;
@@ -104,6 +104,7 @@ class Queue {
         if (this.standby.length === 0) return;
 
         this.queue.push(...this.standby);
+        this.standby = [];
         console.log("All standby tasks pushed to main queue...");
         return this;
     }
@@ -134,15 +135,49 @@ class Queue {
     /**
      * Start running tasks sequentially.
      */
-    async processQueue(){
+    async processQueue() {
+        console.log({
+            running: this.running,
+            queue: this.queue.length,
+            standby: this.standby.length
+        });
         if (this.running || this.queue.length === 0) return;
         this.running = true;
-        while (this.queue.length > 0){
-            const task = this.queue[0];
-            await task();
-            this.queue.shift();
-        }   
-        this.running = false;
+        try {
+            while (this.queue.length > 0) {
+                console.log(`Processing task. Remaining: ${this.queue.length}`);
+                const task = this.queue.shift();
+                try {
+                    await this.withTimeout(task(), 30000);
+                } catch (error) {
+                    console.error("Queue task failed:", error);
+                }
+            }
+        } finally {
+            this.running = false;
+
+            if (this.queue.length > 0) {
+                this.processQueue();
+            }
+        }
+    }
+
+    async withTimeout(promise, timeout = 30000) {
+        let timer;
+        const timeoutPromise = new Promise((_, reject) => {
+            timer = setTimeout(() => {
+                reject(new Error("Task timeout"));
+            }, timeout);
+        });
+
+        try {
+            return await Promise.race([
+                promise,
+                timeoutPromise
+            ]);
+        } finally {
+            clearTimeout(timer);
+        }
     }
 }
 

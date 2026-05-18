@@ -1,5 +1,6 @@
 /* Functions that are not inherently part of Telegram bots. These are used for convenience. */
 // import { Update, Context } from "./base.js";
+import fetch from "node-fetch";
 import { Permissions, SERVICE_FIELDS } from "./constants.js";
 
 function filterObject(obj){
@@ -84,11 +85,29 @@ function isService(message) {
     return SERVICE_FIELDS.some(field => message[field]);
 }
 
+async function fetchWithTimeout(url, options = {}, timeout = 15000) {
+    const controller = new AbortController();
+
+    const id = setTimeout(() => {
+        controller.abort();
+    }, timeout);
+
+    try {
+        return await fetch(url, {
+            ...options,
+            signal: controller.signal
+        });
+    } finally {
+        clearTimeout(id);
+    }
+}
+
 export {
     filterObject,
     accessControl,
     denyAccess,
     parseCommand,
     getMessage,
-    isService
+    isService,
+    fetchWithTimeout
 }

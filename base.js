@@ -9,6 +9,7 @@ import { Queue, Schedule } from "./extra.js";
 import path from "path";
 import { fileURLToPath } from 'url';
 import cors from "cors";
+import { fetchWithTimeout } from "./utils.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -71,12 +72,12 @@ class Context {
             return;
         }
 
-        const response = await fetch(this.bot.endpoint + "getFile", {
+        const response = await fetchWithTimeout(this.bot.endpoint + "getFile", {
             method: "POST",
             body: JSON.stringify({
                 file_id: document.file_id
             })
-        });
+        }, 30000);
 
         return await response.json();
     }
@@ -87,8 +88,15 @@ class Context {
      * @returns {Schedule} Schedule ID.
      */
     schedule(config) {
-        const schedule = setInterval(() => {
-            config.callback(this.update, this);
+        const schedule = setInterval(async () => {
+            try {
+                await config.callback(this.update, this);
+            } catch (error) {
+                console.error(
+                    `Scheduled task ${schedule} failed:`,
+                    error
+                );
+            }
         }, config.interval);
 
         console.log(`Scheduled task ${schedule} started.`);
@@ -481,7 +489,7 @@ class App {
      */
     async setWebhook(config) {
         let params = App.HTTP({ method: "setWebhook", params: { ...config } });
-        const response = await fetch(this.bot.endpoint, params);
+        const response = await fetchWithTimeout(this.bot.endpoint, params, 20000);
         const data = await response.json();
 
         if (response.ok && data.url != '') {
@@ -498,7 +506,7 @@ class App {
     async deleteWebhook() {
 
         let config = App.HTTP({ method: "deleteWebhook", params: {} });
-        const response = await fetch(this.bot.endpoint, config);
+        const response = await fetchWithTimeout(this.bot.endpoint, config, 20000);
 
         if (response.ok) {
             return true;
@@ -513,7 +521,7 @@ class App {
      */
     async getWebhookInfo() {
         let config = App.HTTP({ method: "getWebhookInfo", params: {} });
-        const response = await fetch(this.bot.endpoint, config);
+        const response = await fetchWithTimeout(this.bot.endpoint, config, 20000);
         const data = await response.json();
 
         if (response.ok) {
@@ -669,9 +677,11 @@ class App {
             );
         });
 
-        if (!this.#queue.running) {
-            await this.#queue.processQueue();
-        }
+        this.#queue.processQueue();
+
+        // if (!this.#queue.running) {
+        //     await this.#queue.processQueue();
+        // }
     }
 
     /**
@@ -688,7 +698,7 @@ class App {
                     ...config
                 }
             });
-            const response = await fetch(this.bot.endpoint, params);
+            const response = await fetchWithTimeout(this.bot.endpoint, params, 20000);
 
             if (!response.ok) {
                 throw new Error(`Unable to fetch updates (${response.status}): ${await response.text()}`);
@@ -820,7 +830,7 @@ class Bot {
      */
     async sendMessage(config) {
         let params = App.HTTP({ method: "sendMessage", params: config });
-        const response = await fetch(this.endpoint, params);
+        const response = await fetchWithTimeout(this.endpoint, params, 20000);
         if (!response.ok) {
             console.error("Error:", await response.text());
             return null;
@@ -847,7 +857,7 @@ class Bot {
             formdata.append(key, val);
         }
         let params = App.HTTP({ params: formdata });
-        const response = await fetch(this.endpoint + "sendPhoto", params)
+        const response = await fetchWithTimeout(this.endpoint + "sendPhoto", params, 20000)
             .then(resp => resp.json());
         return new Message(response.result);
     }
@@ -869,7 +879,7 @@ class Bot {
      */
     async deleteMessage(config) {
         let params = App.HTTP({ method: "deleteMessage", params: config });
-        const response = await fetch(this.endpoint, params)
+        const response = await fetchWithTimeout(this.endpoint, params, 20000)
             .then(resp => resp.json());
         return response.result;
     }
@@ -884,7 +894,7 @@ class Bot {
      */
     async banChatMember(config) {
         let params = App.HTTP({ method: "banChatMember", params: config });
-        const response = await fetch(this.endpoint, params)
+        const response = await fetchWithTimeout(this.endpoint, params, 20000)
             .then(resp => resp.json());
         return response.result;
     }
@@ -896,7 +906,7 @@ class Bot {
      */
     async unbanChatMember(config) {
         let params = App.HTTP({ method: "unbanChatMember", params: config });
-        const response = await fetch(this.endpoint, params)
+        const response = await fetchWithTimeout(this.endpoint, params, 20000)
             .then(resp => resp.json());
         return response.result;
     }
@@ -908,7 +918,7 @@ class Bot {
      */
     async answerCallbackQuery(config) {
         let params = App.HTTP({ method: "answerCallbackQuery", params: config });
-        const response = await fetch(this.endpoint, params)
+        const response = await fetchWithTimeout(this.endpoint, params, 20000)
             .then(resp => resp.json());
         return response.result;
     }
@@ -932,7 +942,7 @@ class Bot {
         }
 
         let params = App.HTTP({ params: formdata });
-        const response = await fetch(this.endpoint + "sendVideo", params)
+        const response = await fetchWithTimeout(this.endpoint + "sendVideo", params, 60000)
             .then(resp => resp.json());
         return new Message(response.result);
     }
@@ -944,7 +954,7 @@ class Bot {
      */
     async editMessageText(config) {
         let params = App.HTTP({ method: "editMessageText", params: config });
-        const response = await fetch(this.endpoint, params);
+        const response = await fetchWithTimeout(this.endpoint, params, 20000);
         if (!response.ok) {
             console.error(`Failed to edit message text:`, await response.text());
             return false;
@@ -963,7 +973,7 @@ class Bot {
      */
     async pinChatMessage(config) {
         let params = App.HTTP({ method: "pinChatMessage", params: config });
-        const response = await fetch(this.endpoint, params);
+        const response = await fetchWithTimeout(this.endpoint, params, 20000);
         if (!response.ok) {
             console.error(`Failed to pin message:`, await response.text());
             return false;
@@ -979,7 +989,7 @@ class Bot {
      */
     async unpinChatMessage(config) {
         let params = App.HTTP({ method: "unpinChatMessage", params: config });
-        const response = await fetch(this.endpoint, params);
+        const response = await fetchWithTimeout(this.endpoint, params, 20000);
         if (!response.ok) {
             console.error(`Failed to unpin message:`, await response.text());
             return false;
@@ -996,7 +1006,7 @@ class Bot {
      */
     async unpinAllChatMessages(config) {
         let params = App.HTTP({ method: "unpinAllChatMessages", params: config });
-        const response = await fetch(this.endpoint, params);
+        const response = await fetchWithTimeout(this.endpoint, params, 20000);
         if (!response.ok) {
             console.error(`Failed to unpin all messages:`, await response.text());
             return false;
@@ -1012,7 +1022,7 @@ class Bot {
      */
     async editMessageMedia(config) {
         let params = App.HTTP({ method: "editMessageMedia", params: config });
-        const response = await fetch(this.endpoint, params)
+        const response = await fetchWithTimeout(this.endpoint, params, 60000)
             .then(resp => resp.json());
         if (response.result instanceof Boolean) {
             return response.result;
@@ -1027,7 +1037,7 @@ class Bot {
      */
     async sendChatAction(config) {
         let params = App.HTTP({ method: "sendChatAction", params: config });
-        const response = await fetch(this.endpoint, params)
+        const response = await fetchWithTimeout(this.endpoint, params, 20000)
             .then(resp => resp.json());
         return response.result;
     }
@@ -1057,7 +1067,7 @@ class Bot {
         }
 
         const params = App.HTTP({ params: formdata });
-        const response = await fetch(this.endpoint + "sendMediaGroup", params)
+        const response = await fetchWithTimeout(this.endpoint + "sendMediaGroup", params, 120000)
             .then(resp => resp.json());
 
         if (!response.result) {
@@ -1077,7 +1087,7 @@ class Bot {
      */
     async getFile(config) {
         let params = App.HTTP({ method: "getFile", params: config });
-        const response = await fetch(this.endpoint, params)
+        const response = await fetchWithTimeout(this.endpoint, params, 20000)
             .then(resp => resp.json());
         return new _File(response.result);
     }
@@ -1097,7 +1107,7 @@ class Bot {
         formdata.append("document", config.document, "Archive.zip");
 
         let params = App.HTTP({ params: formdata });
-        const response = await fetch(this.endpoint + "sendDocument", params)
+        const response = await fetchWithTimeout(this.endpoint + "sendDocument", params, 120000)
             .then(resp => resp.json());
         return new Message(response.result);
     }
@@ -1109,7 +1119,7 @@ class Bot {
      */
     async getChatMember(config) {
         let params = App.HTTP({ method: "getChatMember", params: config });
-        const response = await fetch(this.endpoint, params);
+        const response = await fetchWithTimeout(this.endpoint, params, 20000);
 
         if (!response.ok) {
             console.error(await response.text());
@@ -1126,7 +1136,7 @@ class Bot {
      */
     async getChatAdministrators(config) {
         let params = App.HTTP({ method: "getChatAdministrators", params: config });
-        const response = await fetch(this.endpoint, params);
+        const response = await fetchWithTimeout(this.endpoint, params, 20000);
 
         if (!response.ok) {
             console.error(await response.text());
@@ -1142,7 +1152,7 @@ class Bot {
      * @returns {Promise<ChatFullInfo>|Promise<null>}
      */
     async getChat(chat_id) {
-        const response = await fetch(this.endpoint + "getChat", {
+        const response = await fetchWithTimeout(this.endpoint + "getChat", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -1150,7 +1160,7 @@ class Bot {
             body: JSON.stringify({
                 chat_id: chat_id
             })
-        });
+        }, 20000);
 
         if (!response.ok) {
             console.error("Error:", await response.text());
@@ -1167,7 +1177,7 @@ class Bot {
      * @returns {Promise<number>|Promise<null>}
      */
     async getChatMemberCount(chat_id) {
-        const response = await fetch(this.endpoint + "getChatMemberCount", {
+        const response = await fetchWithTimeout(this.endpoint + "getChatMemberCount", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -1175,7 +1185,7 @@ class Bot {
             body: JSON.stringify({
                 chat_id: chat_id
             })
-        });
+        }, 20000);
 
         if (!response.ok) {
             console.error("Error:", await response.text());
@@ -1192,7 +1202,7 @@ class Bot {
      */
     async restrictChatMember(config) {
         let params = App.HTTP({ method: "restrictChatMember", params: config });
-        const response = await fetch(this.endpoint, params);
+        const response = await fetchWithTimeout(this.endpoint, params);
 
         if (!response.ok) {
             console.error("Error:", await response.text());
@@ -1210,7 +1220,7 @@ class Bot {
      */
     async forwardMessage(config) {
         let params = App.HTTP({ method: "forwardMessage", params: config });
-        const response = await fetch(this.endpoint, params);
+        const response = await fetchWithTimeout(this.endpoint, params, 20000);
 
         if (!response.ok) {
             console.error("Error:", await response.text());
@@ -1234,7 +1244,7 @@ class Bot {
         }
 
         let params = App.HTTP({ method: "forwardMessages", params: config });
-        const response = await fetch(this.endpoint, params);
+        const response = await fetchWithTimeout(this.endpoint, params, 30000);
 
         if (!response.ok) {
             console.error("Error:", await response.text());
@@ -1252,7 +1262,7 @@ class Bot {
      */
     async getUserProfilePhotos(config) {
         let params = App.HTTP({ method: "getUserProfilePhotos", params: config });
-        const response = await fetch(this.endpoint, params);
+        const response = await fetchWithTimeout(this.endpoint, params, 30000);
 
         if (!response.ok) {
             console.error("Error:", await response.text());
@@ -1270,7 +1280,7 @@ class Bot {
      */
     async exportChatInviteLink(config) {
         let params = App.HTTP({ method: "exportChatInviteLink", params: config });
-        const response = await fetch(this.endpoint, params);
+        const response = await fetchWithTimeout(this.endpoint, params, 20000);
 
         if (!response.ok) {
             console.error("Error:", await response.text());
@@ -1288,7 +1298,7 @@ class Bot {
      */
     async createChatInviteLink(config) {
         let params = App.HTTP({ method: "createChatInviteLink", params: config });
-        const response = await fetch(this.endpoint, params);
+        const response = await fetchWithTimeout(this.endpoint, params, 20000);
 
         if (!response.ok) {
             console.error("Error:", await response.text());
@@ -1306,7 +1316,7 @@ class Bot {
      */
     async revokeChatInviteLink(config) {
         let params = App.HTTP({ method: "revokeChatInviteLink", params: config });
-        const response = await fetch(this.endpoint, params);
+        const response = await fetchWithTimeout(this.endpoint, params, 20000);
 
         if (!response.ok) {
             console.error("Error:", await response.text());
@@ -1324,7 +1334,7 @@ class Bot {
      */
     async editChatInviteLink(config) {
         let params = App.HTTP({ method: "editChatInviteLink", params: config });
-        const response = await fetch(this.endpoint, params);
+        const response = await fetchWithTimeout(this.endpoint, params, 20000);
 
         if (!response.ok) {
             console.error("Error:", await response.text());
@@ -1342,7 +1352,7 @@ class Bot {
      */
     async approveChatJoinRequest(config) {
         let params = App.HTTP({ method: "approveChatJoinRequest", params: config });
-        const response = await fetch(this.endpoint, params);
+        const response = await fetchWithTimeout(this.endpoint, params, 20000);
 
         if (!response.ok) {
             console.error("Error:", await response.text());
@@ -1360,7 +1370,7 @@ class Bot {
      */
     async declineChatJoinRequest(config) {
         let params = App.HTTP({ method: "declineChatJoinRequest", params: config });
-        const response = await fetch(this.endpoint, params);
+        const response = await fetchWithTimeout(this.endpoint, params, 20000);
 
         if (!response.ok) {
             console.error("Error:", await response.text());
@@ -1384,7 +1394,7 @@ class Bot {
         }
 
         let params = App.HTTP({ method: "setChatMemberTag", params: config });
-        const response = await fetch(this.endpoint, params);
+        const response = await fetchWithTimeout(this.endpoint, params, 20000);
 
         if (!response.ok) {
             console.error("Error:", await response.text());
