@@ -539,7 +539,7 @@ class App {
         const now = Date.now();
 
         // If the time between updates is too short, introduce a delay
-        const delay = Math.max(0, this.lastProcessedTime + 1000 - now); // Delay for 1 second between updates
+        const delay = Math.max(0, this.lastProcessedTime + 100 - now); // Delay for 1 second between updates
         if (delay > 0) {
             // console.log(`Rate limit exceeded, waiting for ${delay}ms`);
             await new Promise(resolve => setTimeout(resolve, delay));
