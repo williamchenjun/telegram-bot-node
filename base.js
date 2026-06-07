@@ -1582,7 +1582,7 @@ class Bot {
         }
 
         const result = await response.json();
-        return new Sticker(result.result);
+        return result.result.map(s => new Sticker(s));
     }
 
 }
