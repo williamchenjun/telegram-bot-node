@@ -680,7 +680,7 @@ class App {
             return true;
         }
 
-        if (update.effective_chat?.type === "channel") {
+        if (update.effective_chat?.type === "channel" || update.effective_chat?.type === "private") {
             return true;
         }
 
