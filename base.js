@@ -1,4 +1,4 @@
-import { CallbackQuery, Chat, LinkPreviewOptions, Message, WebhookInfo, _File, User, ChatMember, ChatMemberAdministrator, ChatMemberBanned, ChatMemberMember, ChatMemberLeft, ChatMemberRestricted, ChatMemberOwner, InputFile, ChatMemberUpdated, Document, ChatFullInfo, ChatPermissions, MessageId, UserProfilePhotos, ChatInviteLink, ChatJoinRequest, MessageEntity } from "./components.js";
+import { CallbackQuery, Chat, LinkPreviewOptions, Message, WebhookInfo, _File, User, ChatMember, ChatMemberAdministrator, ChatMemberBanned, ChatMemberMember, ChatMemberLeft, ChatMemberRestricted, ChatMemberOwner, InputFile, ChatMemberUpdated, Document, ChatFullInfo, ChatPermissions, MessageId, UserProfilePhotos, ChatInviteLink, ChatJoinRequest, MessageEntity, ForumTopic, Sticker } from "./components.js";
 import { BaseHandler, CallbackQueryHandler, ChatMemberHandler, CommandHandler, ConversationHandler, MessageHandler } from "./handlers.js";
 import fs from "fs";
 import { FormData } from "node-fetch";
@@ -1545,6 +1545,44 @@ class Bot {
 
         const result = await response.json();
         return result.result;
+    }
+
+    /**
+     * Use this method to create a topic in a forum supergroup chat or a private chat with a user. In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the can_manage_topics administrator right. Returns information about the created topic as a ForumTopic object.
+     * Allowed icon_color values: 7322096 (0x6FB9F0), 16766590 (0xFFD67E), 13338331 (0xCB86DB), 9367192 (0x8EEE98), 16749490 (0xFF93B2), 16478047 (0xFB6F5F).
+     * Information about allowed icon_custom_emoji_id values can be found by using getForumTopicIconStickers().
+     * 
+     * @param {{chat_id: number|string, name: string, icon_color: number, icon_custom_emoji_id: string}} config 
+     * @returns {Promise<ForumTopic>}
+     */
+    async createForumTopic(config) {
+        let params = App.HTTP({ method: "createForumTopic", params: config });
+        const response = await fetchWithTimeout(this.endpoint, params, 20000);
+
+        if (!response.ok) {
+            console.error("Error:", await response.text());
+            return false;
+        }
+
+        const result = await response.json();
+        return new ForumTopic(result.result);
+    }
+
+    /**
+     * Use this method to get custom emoji stickers, which can be used as a forum topic icon by any user. Requires no parameters. Returns an Array of Sticker objects.
+     * @returns {Promise<Sticker[]>}
+     */
+    async getForumTopicIconStickers(){
+        let params = App.HTTP({ method: "getForumTopicIconStickers", params: config });
+        const response = await fetchWithTimeout(this.endpoint, params, 20000);
+
+        if (!response.ok) {
+            console.error("Error:", await response.text());
+            return false;
+        }
+
+        const result = await response.json();
+        return new Sticker(result.result);
     }
 
 }

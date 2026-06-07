@@ -400,6 +400,69 @@ class ChatBackground {
 }
 
 /**
+ * This object represents a forum topic.
+ */
+class ForumTopic {
+    constructor(forum_topic){
+        this.forum_topic = forum_topic;
+    }
+
+    toJSON() {
+        return { ...this };
+    }
+
+    /**
+     * Unique identifier of the forum topic.
+     * @returns {number}
+     */
+    get message_thread_id() {
+        return this.forum_topic_created.hasOwnProperty("message_thread_id")
+            ? this.forum_topic_created.message_thread_id
+            : null;
+    }
+
+    /**
+     * Name of the topic.
+     * @returns {string}
+     */
+    get name() {
+        return this.forum_topic_created.hasOwnProperty("name")
+            ? this.forum_topic_created.name
+            : null;
+    }
+
+    /**
+     * Color of the topic icon in RGB format.
+     * @returns {number}
+     */
+    get icon_color() {
+        return this.forum_topic_created.hasOwnProperty("icon_color")
+            ? this.forum_topic_created.icon_color
+            : null;
+    }
+
+    /**
+     * Optional. Unique identifier of the custom emoji shown as the topic icon.
+     * @returns {string}
+     */
+    get icon_custom_emoji_id() {
+        return this.forum_topic_created.hasOwnProperty("icon_custom_emoji_id")
+            ? this.forum_topic_created.icon_custom_emoji_id
+            : null;
+    }
+
+    /**
+     * Optional. True, if the name of the topic wasn't specified explicitly by its creator and likely needs to be changed by the bot.
+     * @returns {boolean}
+     */
+    get is_name_implicit() {
+        return this.forum_topic_created.hasOwnProperty("is_name_implicit")
+            ? this.forum_topic_created.is_name_implicit
+            : null;
+    }
+}
+
+/**
  * Represents a service message about a new forum topic created.
  */
 class ForumTopicCreated {
@@ -1985,6 +2048,31 @@ class Chat {
      */
     async editMessageText(config) {
         return await Context.bot.editMessageText({chat_id: this.id, ...config});
+    }
+
+    /**
+     * Use this method to create a topic in a forum supergroup chat or a private chat with a user. In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the can_manage_topics administrator right. Returns information about the created topic as a ForumTopic object.
+     * Allowed icon_color values: 7322096 (0x6FB9F0), 16766590 (0xFFD67E), 13338331 (0xCB86DB), 9367192 (0x8EEE98), 16749490 (0xFF93B2), 16478047 (0xFB6F5F).
+     * Information about allowed icon_custom_emoji_id values can be found by using getForumTopicIconStickers().
+     * 
+     * Shortcut of `bot.createForumTopic()`.
+     * 
+     * @param {{name: string, icon_color: number, icon_custom_emoji_id: string}} config 
+     * @returns {Promise<ForumTopic>}
+     */
+    async createForumTopic(config) {
+        return await Context.bot.createForumTopic({chat_id: this.id, ...config});
+    }
+
+    /**
+     * Use this method to get custom emoji stickers, which can be used as a forum topic icon by any user. Requires no parameters. Returns an Array of Sticker objects.
+     * 
+     * Shortcut of `bot.getForumTopicIconStickers()`.
+     * 
+     * @returns {Promise<Sticker[]>}
+     */
+    async getForumTopicIconStickers(){
+        return await Context.bot.getForumTopicIconStickers();
     }
 }
 
@@ -5878,6 +5966,7 @@ export {
     Dice,
     Document,
     ExternalReplyInfo,
+    ForumTopic,
     ForumTopicClosed,
     ForumTopicCreated,
     ForumTopicEdited,
