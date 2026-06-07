@@ -676,17 +676,24 @@ class App {
      * @returns {Promise<boolean>}
      */
     async checkPermissions(update, context, requiredPermissions) {
+        const userId = update.effective_user?.id;
+        const chatId = update.effective_chat?.id;
+
         if (requiredPermissions === Permissions.ALL) {
             return true;
         }
 
         if (update.effective_chat?.type === "channel" || update.effective_chat?.type === "private") {
-            return true;
+            if (typeof requiredPermissions === "number" && userId === requiredPermissions) {
+                return true
+            } else if (typeof requiredPermissions === "string") {
+                return true;
+            }
+
+            return false;
         }
 
         const hasPerms = (userPerms, requiredPerms) => (userPerms & requiredPerms) !== 0;
-        const userId = update.effective_user?.id;
-        const chatId = update.effective_chat?.id;
         let userPermissions = Permissions.NONE;
         const member = await context.bot.getChatMember({chat_id: chatId, user_id: userId});
 
