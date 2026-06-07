@@ -1573,7 +1573,7 @@ class Bot {
      * @returns {Promise<Sticker[]>}
      */
     async getForumTopicIconStickers(){
-        let params = App.HTTP({ method: "getForumTopicIconStickers" });
+        let params = App.HTTP({ method: "getForumTopicIconStickers", params: {} });
         const response = await fetchWithTimeout(this.endpoint, params, 20000);
 
         if (!response.ok) {
