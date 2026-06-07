@@ -416,8 +416,8 @@ class ForumTopic {
      * @returns {number}
      */
     get message_thread_id() {
-        return this.forum_topic_created.hasOwnProperty("message_thread_id")
-            ? this.forum_topic_created.message_thread_id
+        return this.forum_topic.hasOwnProperty("message_thread_id")
+            ? this.forum_topic.message_thread_id
             : null;
     }
 
@@ -426,8 +426,8 @@ class ForumTopic {
      * @returns {string}
      */
     get name() {
-        return this.forum_topic_created.hasOwnProperty("name")
-            ? this.forum_topic_created.name
+        return this.forum_topic.hasOwnProperty("name")
+            ? this.forum_topic.name
             : null;
     }
 
@@ -436,8 +436,8 @@ class ForumTopic {
      * @returns {number}
      */
     get icon_color() {
-        return this.forum_topic_created.hasOwnProperty("icon_color")
-            ? this.forum_topic_created.icon_color
+        return this.forum_topic.hasOwnProperty("icon_color")
+            ? this.forum_topic.icon_color
             : null;
     }
 
@@ -446,8 +446,8 @@ class ForumTopic {
      * @returns {string}
      */
     get icon_custom_emoji_id() {
-        return this.forum_topic_created.hasOwnProperty("icon_custom_emoji_id")
-            ? this.forum_topic_created.icon_custom_emoji_id
+        return this.forum_topic.hasOwnProperty("icon_custom_emoji_id")
+            ? this.forum_topic.icon_custom_emoji_id
             : null;
     }
 
@@ -456,8 +456,8 @@ class ForumTopic {
      * @returns {boolean}
      */
     get is_name_implicit() {
-        return this.forum_topic_created.hasOwnProperty("is_name_implicit")
-            ? this.forum_topic_created.is_name_implicit
+        return this.forum_topic.hasOwnProperty("is_name_implicit")
+            ? this.forum_topic.is_name_implicit
             : null;
     }
 }
