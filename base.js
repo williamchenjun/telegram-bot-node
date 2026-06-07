@@ -959,6 +959,22 @@ class Bot {
     }
 
     /**
+     * Use this method to stream a partial message to a user while the message is being generated. Note that the streamed draft is ephemeral and acts as a temporary 30-second preview - once the output is finalized, you must call sendMessage with the complete message to persist it in the user's chat. Returns True on success.
+     * @param {{chat_id: number|string, message_thread_id: number, draft_id: number, text: string, parse_mode: string, entities: MessageEntity[]}} config 
+     * @returns {Promise<Boolean>|Promise<null>}
+    */
+    async sendMessageDraft(config) {
+        let params = App.HTTP({ method: "sendMessageDraft", params: config });
+        const response = await fetchWithTimeout(this.endpoint, params, 20000);
+        if (!response.ok) {
+            console.error("Error:", await response.text());
+            return null;
+        }
+        const message = await response.json();
+        return new Boolean(message.result);
+    }
+
+    /**
      * Use this method to send photos. On success, the sent `Message` is returned.
      * 
      * For example:
